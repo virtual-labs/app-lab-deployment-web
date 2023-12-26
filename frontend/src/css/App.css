@@ -2412,6 +2412,14 @@ textarea.w-select {
   display: grid;
 }
 
+.add-lab-container {
+  border: 2px solid #00a38a;
+}
+
+.table-tr {
+  background-color: #00ac8e;
+}
+
 .submit-button {
   height: 40px;
   background-color: #00a38a;

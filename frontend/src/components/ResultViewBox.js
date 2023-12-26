@@ -5,6 +5,9 @@ import { useRef } from "react";
 import axios from "axios";
 import { SEARCH_API } from "../utils/config_data";
 import ReactLoading from "react-loading";
+import { useState } from "react";
+import Ajv from "ajv";
+import { descriptorSchema } from "../utils/config_data";
 
 const ResultViewBox = ({
   present,
@@ -15,10 +18,15 @@ const ResultViewBox = ({
   setLoading,
 }) => {
   const jsonEditorRef = useRef(null);
+  const [isValid, setIsValid] = useState(true);
+  const [validationErrors, setValidationErrors] = useState([]);
+
+  const ajv = new Ajv();
 
   useEffect(() => {
     if (jsonEditorRef.current !== null) {
       jsonEditorRef.current.set(json);
+      valiadateJSON(json);
     }
   }, [json]);
 
@@ -40,27 +48,60 @@ const ResultViewBox = ({
       return;
     }
 
+    if (!isValid) {
+      const conformMsg = window.confirm(
+        `The descriptor file is not valid. Do you want to continue?`
+      );
+      if (!conformMsg) return;
+    }
+
     try {
+      setLoading(true);
       const url = SEARCH_API + "/commit_descriptor";
       const body = {
         repoName: present.repoName,
         descriptor: jsonEditorRef.current.get(),
       };
-
-      setLoading(true);
+      console.log(body);
       const response = await axios.post(url, body);
-      setLoading(false);
-
       if (response.status >= 200 && response.status < 300) {
         alert("Descriptor file updated successfully");
       } else {
-        alert(response.data.msg);
+        alert(
+          "Error updating JSON file: " + response.data.msg + ". Try again later"
+        );
       }
     } catch (error) {
-      if (error.response.data.msg) alert(error.response.data.msg);
-      else alert(error.message);
+      if (error.response.data.msg) {
+        alert(
+          "Error updating JSON file: " +
+            error.response.data.msg +
+            ". Try again later"
+        );
+      } else
+        alert(
+          "Error updating JSON file: " + error.message + ". Try again later"
+        );
       console.error("Error updating JSON file:", error.message);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const valiadateJSON = (data) => {
+    const validate = ajv.compile(descriptorSchema);
+    const isValidData = validate(data);
+    setIsValid(isValidData);
+    if (!isValidData) {
+      setValidationErrors(validate.errors || []);
+    } else {
+      setValidationErrors([]);
+    }
+  };
+
+  const handleChange = (data) => {
+    if (!data) return;
+    valiadateJSON(data);
   };
 
   return (
@@ -84,6 +125,21 @@ const ResultViewBox = ({
           Lab Descriptor
         </div>
         <button
+          className={`px-2 ${
+            isValid ? "bg-green-600" : "bg-red-600"
+          } text-gray-100 text-base mr-2 rounded-full	 `}
+          onClick={() => {
+            if (!isValid) {
+              alert(
+                "The descriptor file is not valid. Please fix the errors and try again\n " +
+                  JSON.stringify(validationErrors, null, 2)
+              );
+            }
+          }}
+        >
+          {isValid ? "Valid Descriptor" : "Invalid Decsriptor"}
+        </button>
+        <button
           onClick={handleClick}
           className="px-2 submit-button text-gray-100 text-lg"
         >
@@ -91,7 +147,7 @@ const ResultViewBox = ({
         </button>
       </div>
       <div className="flex-1 flex flex-col p-0 overflow-auto">
-        <Editor ref={setRef} value={json} />
+        <Editor ref={setRef} value={json} onChange={handleChange} />
       </div>
     </>
   );

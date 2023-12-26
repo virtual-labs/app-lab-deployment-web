@@ -39,6 +39,7 @@ const QueryBox = ({
         response = await response.json();
         setResults(response.labs);
       } else {
+        console.log(response);
       }
       // console.log(response);
     } catch (error) {

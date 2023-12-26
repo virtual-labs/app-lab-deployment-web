@@ -4,73 +4,129 @@ const { google } = require("googleapis");
 const { SPREADSHEET_ID, SPREADSHEET_RANGE } = require("../secrets/spreadsheet");
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
+const { get } = require("../routes/lab");
 
 const getDataFromSheet = async (spreadsheetId, range) => {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: "./secrets/service-account-secret.json",
-    scopes: "https://www.googleapis.com/auth/spreadsheets",
-  });
-  const authClientObject = await auth.getClient();
-  const googleSheetsInstance = google.sheets({
-    version: "v4",
-    auth: authClientObject,
-  });
-  const readData = await googleSheetsInstance.spreadsheets.get({
-    auth,
-    spreadsheetId,
-    ranges: range,
-    fields: "sheets(data(rowData(values(hyperlink,userEnteredValue))))",
-  });
-  return readData;
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: "./secrets/service-account-secret.json",
+      scopes: "https://www.googleapis.com/auth/spreadsheets",
+    });
+    const authClientObject = await auth.getClient();
+    const googleSheetsInstance = google.sheets({
+      version: "v4",
+      auth: authClientObject,
+    });
+    const readData = await googleSheetsInstance.spreadsheets.get({
+      auth,
+      spreadsheetId,
+      ranges: range,
+      fields: "sheets(data(rowData(values(hyperlink,userEnteredValue))))",
+    });
+    return readData;
+  } catch (error) {
+    console.log(error);
+    throw new Error(error.message);
+  }
+};
+
+const appendIntoSheet = async (row) => {
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: "./secrets/service-account-secret.json",
+      scopes: "https://www.googleapis.com/auth/spreadsheets",
+    });
+    const authClientObject = await auth.getClient();
+    const googleSheetsInstance = google.sheets({
+      version: "v4",
+      auth: authClientObject,
+    });
+    const resource = {
+      majorDimension: "ROWS",
+      values: row,
+    };
+    const result = await googleSheetsInstance.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: SPREADSHEET_RANGE,
+      valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
+      resource: resource,
+    });
+    // console.log(result);
+    return result.data.updates.updatedCells;
+  } catch (error) {
+    console.log(error);
+    throw new Error(error.message);
+  }
+};
+
+const getLinkAndName = (obj) => {
+  let link = "";
+  let name = "";
+  if (obj.userEnteredValue.stringValue) {
+    name = obj.userEnteredValue.stringValue.trim();
+  } else if (obj.userEnteredValue.formulaValue) {
+    name = obj.userEnteredValue.formulaValue.trim();
+    name = name.split('"');
+    name = name[name.length - 2];
+  }
+  if (obj.hyperlink) {
+    link = obj.hyperlink;
+  }
+  return { link, name };
 };
 
 const getLabList = async () => {
-  const spreadsheetId = SPREADSHEET_ID;
-  const range = SPREADSHEET_RANGE;
-  const readData = await getDataFromSheet(spreadsheetId, range);
-  const rows = readData.data.sheets[0].data[0].rowData;
+  try {
+    const spreadsheetId = SPREADSHEET_ID;
+    const range = SPREADSHEET_RANGE;
+    const readData = await getDataFromSheet(spreadsheetId, range);
+    const rows = readData.data.sheets[0].data[0].rowData;
+    let labs = rows.filter(
+      (row) => row.hasOwnProperty("values") && row.values.length === 6
+    );
+    let instituteName = "";
 
-  let labs = rows.filter(
-    (row) => row.hasOwnProperty("values") && row.values.length === 6
-  );
-  let instituteName = "";
+    let labList = [];
 
-  let labList = [];
+    for (let lab of labs) {
+      let values = lab.values;
+      if (!values[2]) continue;
+      let university = "";
 
-  for (let lab of labs) {
-    let values = lab.values;
-    if (!values[2]) continue;
-    let university = "";
+      if (values[1].userEnteredValue)
+        university = values[1].userEnteredValue.stringValue.trim();
 
-    if (values[1].userEnteredValue)
-      university = values[1].userEnteredValue.stringValue.trim();
+      if (university === "College Name") continue;
 
-    if (university === "College Name") continue;
+      if (university === "") {
+        university = instituteName;
+      } else {
+        instituteName = university;
+      }
+      if (university) {
+        let { link: labLink, name: labName } = getLinkAndName(values[2]);
+        let discipline = values[3].userEnteredValue.stringValue.trim();
+        let { link: repoLink } = getLinkAndName(values[4]);
+        let repoName = repoLink.split("/").pop();
+        let { link: descriptorLink } = getLinkAndName(values[5]);
 
-    if (university === "") {
-      university = instituteName;
-    } else {
-      instituteName = university;
+        labList.push({
+          university,
+          labName,
+          labLink,
+          discipline,
+          repoLink,
+          repoName,
+          descriptorLink,
+        });
+      }
     }
-    if (university) {
-      let labName = values[2].userEnteredValue.stringValue.trim();
-      let labLink = values[2].hyperlink || "#";
-      let discipline = values[3].userEnteredValue.stringValue.trim();
-      let repoName = values[4].hyperlink.split("/").pop();
-      let repoLink = values[4].hyperlink || "#";
-      let descriptorLink = values[5].hyperlink || "#";
-      labList.push({
-        university,
-        labName,
-        labLink,
-        discipline,
-        repoLink,
-        repoName,
-        descriptorLink,
-      });
-    }
+    return labList;
+  } catch (error) {
+    console.log(error);
+    throw new Error(error.message);
   }
-  return labList;
 };
 
 const getLabs = async (req, res) => {
@@ -86,16 +142,6 @@ const getLabs = async (req, res) => {
       lab.discipline.toLowerCase().includes(search) ||
       lab.repoName.toLowerCase().includes(search)
     );
-  });
-  filteredLabs.push({
-    university: "TEMP",
-    labName: "Test Lab",
-    labLink: "http://mrmsmtbs-iitk.vlabs.ac.in/",
-    discipline: "Mechanical Engineering",
-    repoLink: "https://github.com/chir263/lab-mrmsmtbs-iitk-cj",
-    repoName: "lab-mrmsmtbs-iitk-cj",
-    descriptorLink:
-      "https://github.com/chir263/lab-mrmsmtbs-iitk-cj/blob/master/lab-descriptor.json",
   });
 
   return res
@@ -197,8 +243,56 @@ const commitDescriptor = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: "success" });
 };
 
+const addLab = async (req, res) => {
+  const { university, labName, labLink, discipline, labURL, descriptorURL } =
+    req.body;
+  {
+    if (!university) {
+      throw new BadRequestError(`institute name missing`);
+    }
+
+    if (!labName) {
+      throw new BadRequestError(`lab name missing`);
+    }
+    if (!labLink) {
+      throw new BadRequestError(`lab link missing`);
+    }
+
+    if (!discipline) {
+      throw new BadRequestError(`discipline name missing`);
+    }
+    if (!labURL) {
+      throw new BadRequestError(`lab url missing`);
+    }
+
+    if (!descriptorURL) {
+      throw new BadRequestError(`descriptor url missing`);
+    }
+  }
+  const labList = await getLabList();
+
+  const f = labList.filter((lab) => lab.repoLink === labURL);
+  if (f.length !== 0) {
+    throw new BadRequestError(`lab already exists`);
+  }
+
+  const rows = [
+    [
+      labList.length + 1,
+      university,
+      `=HYPERLINK("${labLink}", "${labName}")`,
+      discipline,
+      `=HYPERLINK("${labURL}", "Repo Link")`,
+      `=HYPERLINK("${descriptorURL}", "Lab Descriptor Link")`,
+    ],
+  ];
+  await appendIntoSheet(rows);
+  return res.status(StatusCodes.OK).json({ message: "success" });
+};
+
 module.exports = {
   getLabs,
   getLabDescriptor,
   commitDescriptor,
+  addLab,
 };

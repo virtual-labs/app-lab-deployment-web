@@ -5,6 +5,7 @@ import { DEFAULT_SECTION } from "./utils/config_data";
 import { NavBar, SearchBox, ResultViewBox } from "./components";
 import { useEffect } from "react";
 import { SEARCH_API } from "./utils/config_data";
+import AddLab from "./components/AddLab";
 
 function App() {
   const [present, setPresent] = useState(DEFAULT_SECTION);
@@ -13,6 +14,7 @@ function App() {
   const [jsonData, setJsonData] = useState({});
 
   const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(false);
 
   useEffect(() => {
     const url = SEARCH_API + "/get_descriptor?link=" + present.descriptorLink;
@@ -43,8 +45,9 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
+      {modal && <AddLab setModal={setModal} />}
       <div className="flex">
-        <NavBar />
+        <NavBar setModal={setModal} />
       </div>
       <div className="flex flex-1 flex-row flex-block overflow-hidden">
         <div className="flex flex-col w-2/5 overflow-hidden">

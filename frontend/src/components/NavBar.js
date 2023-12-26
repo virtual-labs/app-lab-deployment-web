@@ -2,7 +2,7 @@ import React from "react";
 import NavImg from "../media/download.png";
 import { INSERT_DOC_URL } from "../utils/config_data";
 
-const NavBar = () => {
+const NavBar = ({ setModal }) => {
   return (
     <>
       <div className="navbar-no-shadow-container w-nav">
@@ -12,12 +12,12 @@ const NavBar = () => {
             Lab Deployment
           </div>
           <div style={{ float: "right", marginLeft: "auto" }}>
-            {/* <button
+            <button
               className="insert-doc-button"
-              onClick={() => window.open(INSERT_DOC_URL, "_blank")}
+              onClick={() => setModal(true)}
             >
-              Insert Document
-            </button> */}
+              Add Lab
+            </button>
           </div>
         </div>
       </div>
