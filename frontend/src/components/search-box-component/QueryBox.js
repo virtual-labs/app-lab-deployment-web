@@ -2,26 +2,22 @@ import React from "react";
 import { DEFAULT_SECTION, SEARCH_API } from "../../utils/config_data";
 
 const QueryBox = ({
-  setQuery,
   loader,
-  query,
   setLoading,
   setPresent,
   setResults,
-  highlight,
-  setHighlight,
   results,
   inpRef,
 }) => {
   const getResults = async (e) => {
     e.preventDefault();
-    query.search_query = inpRef.current.value;
+    const query = inpRef.current.value;
     if (loader) return;
-    if (query.search_query.trim() === "") {
+    if (query.trim() === "") {
       return;
     }
 
-    const url = SEARCH_API + "?search=" + query.search_query;
+    const url = SEARCH_API + "?search=" + query;
     try {
       const config = {
         method: "GET",

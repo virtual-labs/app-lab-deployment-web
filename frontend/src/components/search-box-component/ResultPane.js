@@ -1,18 +1,16 @@
 import React from "react";
 import LoadingImg from "../../media/loading-73.gif";
 import ResultBox from "./ResultBox";
-import { getRankedResult } from "../../utils/utils";
+import { useDeployLabList } from "../../utils/useLabList";
 
-const ResultPane = ({
-  loader,
-  results,
-  setPresent,
-  query,
-  highlight,
-  present,
-}) => {
-  // const rankedResult = getRankedResult(results, query.search_query);
-  // console.log(rankedResult);
+const ResultPane = ({ loader, results, setPresent, present }) => {
+  const { deployLabList, setDeployLabList } = useDeployLabList();
+
+  const addToList = (lab) => {
+    if (deployLabList.includes(lab)) return;
+    setDeployLabList([...deployLabList, lab]);
+  };
+
   return (
     <>
       {loader && (
@@ -32,9 +30,13 @@ const ResultPane = ({
                 key={i}
                 result={result}
                 setPresent={setPresent}
-                searchQuery={query.search_query}
-                highlight={highlight}
                 present={present}
+                addToList={addToList}
+                inList={
+                  deployLabList.filter(
+                    (lab) => lab.repoName === result.repoName
+                  ).length > 0
+                }
               />
             );
           })}

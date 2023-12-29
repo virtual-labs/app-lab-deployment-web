@@ -2904,3 +2904,65 @@ textarea.w-select {
 .doctype-view-box.pdf {
   background-color: rgb(218, 21, 21);
 }
+
+.add-deploy-button {
+  font-size: 15px;
+  padding: 6px;
+  color: #00c9a8;
+  background-color: white;
+  border: #00c9a8 1px solid;
+}
+
+.add-deploy-button:hover {
+  background-color: #e4e4e4;
+}
+
+.add-deploy-button:active {
+  background-color: #bcbcbc;
+}
+
+.lab-count {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #00ac8e;
+  color: #fff;
+  font-size: 15px;
+  /* text-align: center; */
+  line-height: 30px;
+}
+
+.table-link {
+  color: #00ac8e;
+  text-decoration: none;
+}
+
+.table-link:hover {
+  color: #00ac8e;
+  text-decoration: underline;
+
+}
+
+.deploy-doc-button {
+  font-size: 24px;
+  padding: 6px;
+  color: #00c9a8;
+  background-color: rgb(231, 231, 231);
+  border: #00c9a8 2px solid;
+}
+
+.deploy-doc-button:hover {
+  background-color: #00a38a;
+  border: #00a38a 2px solid;
+  color: #fff;
+}
+
+.deploy-doc-button:active {
+  background-color: #036456;
+  border: #036456 2px solid;
+  color: #fff;
+}

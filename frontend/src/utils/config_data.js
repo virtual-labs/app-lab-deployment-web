@@ -1,3 +1,5 @@
+import { createContext, useContext, useEffect, useState } from "react";
+
 const DEFAULT_SECTION = {
   accessibility: "public",
   document: "Page title",
@@ -18,25 +20,6 @@ const DEFAULT_QUERY = {
   acc_filter: "Any",
   page_title_filter: "",
 };
-
-const DOCUMENT_TYPES = [
-  { type: "Any", title: "" },
-  { type: "md", title: "Markdown Github" },
-  { type: "org", title: "ORG mode File" },
-  { type: "gdoc", title: "Google Document" },
-  { type: "xlsx", title: "Google Sheet" },
-  { type: "github", title: "Github File" },
-  // { type: "drive", title: "Google Drive File" },
-  { type: "link", title: "Link" },
-  { type: "pdf", title: "PDF file" },
-  { type: "dir", title: "Google Drive Folder" },
-];
-
-const ACCESSIBILITY_TYPES = [
-  { type: "Any", title: "" },
-  { type: "private" },
-  { type: "public" },
-];
 
 const SRC_TYPES = [
   { type: "Any", title: "" },
@@ -380,14 +363,42 @@ const descriptorSchema = {
   },
 };
 
+function useDescriptorSource() {
+  const [descriptor, setDescriptor] = useState({});
+
+  useEffect(() => {
+    fetch(
+      "https://raw.githubusercontent.com/virtual-labs/ph3-lab-mgmt/master/validation/schemas/labDescSchema.json"
+    )
+      .then((response) => response.json())
+      .then((data) => setDescriptor(data));
+  }, []);
+
+  return descriptor;
+}
+
+const DescriptorContext = createContext();
+
+function useDescriptor() {
+  return useContext(DescriptorContext);
+}
+
+function DescriptorTemplateProvider({ children }) {
+  return (
+    <DescriptorContext.Provider value={useDescriptorSource()}>
+      {children}
+    </DescriptorContext.Provider>
+  );
+}
+
 export {
   DEFAULT_SECTION,
-  DOCUMENT_TYPES,
   INSERT_DOC_URL,
   DEFAULT_QUERY,
   SEARCH_API,
-  ACCESSIBILITY_TYPES,
   SRC_TYPES,
   stopWordsMap,
   descriptorSchema,
+  DescriptorTemplateProvider,
+  useDescriptor,
 };

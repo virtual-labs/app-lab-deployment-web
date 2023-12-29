@@ -131,6 +131,7 @@ const getLabList = async () => {
 
 const getLabs = async (req, res) => {
   let { search } = req.query;
+  console.log("search request for: ", search);
   search = search.toLowerCase().trim();
 
   const labList = await getLabList();

@@ -2,10 +2,12 @@ import React, { useRef } from "react";
 import { useState } from "react";
 import { DEFAULT_QUERY } from "../utils/config_data";
 import { QueryBox, ResultPane } from "./search-box-component";
+import { useSearchList } from "../utils/useSearchList";
 
-const SearchBox = ({ setPresent, highlight, setHighlight, present }) => {
+const SearchBox = ({ setPresent, present }) => {
   const [query, setQuery] = useState(DEFAULT_QUERY);
-  const [results, setResults] = useState([]);
+  const { searchList: results, setSearchList: setResults } = useSearchList();
+
   const [loader, setLoading] = useState(false);
   const inpRef = useRef();
 
@@ -18,8 +20,6 @@ const SearchBox = ({ setPresent, highlight, setHighlight, present }) => {
         setLoading={setLoading}
         setPresent={setPresent}
         setResults={setResults}
-        highlight={highlight}
-        setHighlight={setHighlight}
         results={results}
         inpRef={inpRef}
       />
@@ -27,8 +27,6 @@ const SearchBox = ({ setPresent, highlight, setHighlight, present }) => {
         loader={loader}
         results={results}
         setPresent={setPresent}
-        query={query}
-        highlight={highlight}
         present={present}
       />
     </>

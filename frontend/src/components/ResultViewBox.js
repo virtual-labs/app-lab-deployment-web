@@ -7,21 +7,15 @@ import { SEARCH_API } from "../utils/config_data";
 import ReactLoading from "react-loading";
 import { useState } from "react";
 import Ajv from "ajv";
-import { descriptorSchema } from "../utils/config_data";
+import { useDescriptor } from "../utils/config_data";
 
-const ResultViewBox = ({
-  present,
-  highlight,
-  json,
-  setJsonData,
-  loading,
-  setLoading,
-}) => {
+const ResultViewBox = ({ present, json, loading, setLoading }) => {
   const jsonEditorRef = useRef(null);
   const [isValid, setIsValid] = useState(true);
   const [validationErrors, setValidationErrors] = useState([]);
 
   const ajv = new Ajv();
+  const descriptor = useDescriptor();
 
   useEffect(() => {
     if (jsonEditorRef.current !== null) {
@@ -89,7 +83,7 @@ const ResultViewBox = ({
   };
 
   const valiadateJSON = (data) => {
-    const validate = ajv.compile(descriptorSchema);
+    const validate = ajv.compile(descriptor);
     const isValidData = validate(data);
     setIsValid(isValidData);
     if (!isValidData) {
