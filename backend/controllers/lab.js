@@ -4,7 +4,6 @@ const { google } = require("googleapis");
 const { SPREADSHEET_ID, SPREADSHEET_RANGE } = require("../secrets/spreadsheet");
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
-const { get } = require("../routes/lab");
 
 const getDataFromSheet = async (spreadsheetId, range) => {
   try {
@@ -151,14 +150,18 @@ const getLabs = async (req, res) => {
 };
 
 const getLabDescriptor = async (req, res) => {
-  const { link } = req.query;
+  const { link, access_token } = req.query;
 
   if (!link) {
     throw new BadRequestError(`descriptor link missing`);
   }
 
+  if (!access_token) {
+    throw new BadRequestError(`github access_token missing`);
+  }
+
   const octokit = new Octokit({
-    auth: process.env.GITHUB_ACCESS_TOKEN,
+    auth: access_token,
   });
 
   const tokens = link.split("/");
@@ -187,8 +190,8 @@ const getLabDescriptor = async (req, res) => {
   return res.status(StatusCodes.OK).json(descriptorJson);
 };
 
-const getBlobSHA = async (owner, repo, path, branch) => {
-  const octokit = new Octokit();
+const getBlobSHA = async (owner, repo, path, branch, access_token) => {
+  const octokit = new Octokit({ auth: access_token });
   const response = await octokit.repos.getContent({
     owner,
     repo,
@@ -196,12 +199,11 @@ const getBlobSHA = async (owner, repo, path, branch) => {
     ref: branch,
   });
   const blobSHA = response.data.sha;
-
   return blobSHA;
 };
 
 const commitDescriptor = async (req, res) => {
-  const { repoName, descriptor } = req.body;
+  const { repoName, descriptor, access_token } = req.body;
 
   if (!repoName) {
     throw new BadRequestError(`repository name missing`);
@@ -212,7 +214,7 @@ const commitDescriptor = async (req, res) => {
   }
 
   const octokit = new Octokit({
-    auth: process.env.GITHUB_ACCESS_TOKEN,
+    auth: access_token,
   });
 
   const content = JSON.stringify(descriptor, null, 2);
@@ -221,7 +223,8 @@ const commitDescriptor = async (req, res) => {
     process.env.GITHUB_OWNER,
     repoName,
     "lab-descriptor.json",
-    process.env.GITHUB_BRANCH
+    process.env.GITHUB_BRANCH,
+    access_token
   );
 
   await octokit.repos.createOrUpdateFileContents({
@@ -232,13 +235,13 @@ const commitDescriptor = async (req, res) => {
     content: contentEncoded,
     branch: process.env.GITHUB_BRANCH,
     committer: {
-      name: `Octokit Bot`,
-      email: "abc@gmail.com",
+      name: `Lab Deployment Bot`,
+      email: "vlabs-lab-deployment@gmail.com",
     },
     sha,
     author: {
-      name: "Octokit Bot",
-      email: "abc@gmail.com",
+      name: "Lab Deployment Bot",
+      email: "vlabs-lab-deployment@gmail.com",
     },
   });
   return res.status(StatusCodes.OK).json({ message: "success" });

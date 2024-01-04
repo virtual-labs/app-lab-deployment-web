@@ -18,7 +18,12 @@ const AddLab = ({ setModal }) => {
     if (loading || addLoading) return;
     const labURL = lab_url.slice();
     const descriptorURL = labURL + "/blob/master/lab-descriptor.json";
-    const url = SEARCH_API + "/get_descriptor?link=" + descriptorURL;
+    const url =
+      SEARCH_API +
+      "/get_descriptor?link=" +
+      descriptorURL +
+      "&access_token=" +
+      localStorage.getItem("accessToken");
     async function fetchData() {
       const config = {
         method: "GET",

@@ -10,11 +10,20 @@ const DeployTable = ({ data }) => {
   };
 
   return (
-    <div className="w-full h-4/5 overflow-auto">
+    <div className="w-full h-full overflow-auto">
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
-            <th className="py-2 px-4 border-r"></th>
+            <th className="py-2 px-4 border-r">
+              {deployLabList.length > 1 && (
+                <button
+                  className="bg-red-400 text-white px-2 py-1 hover:bg-red-600 active:bg-red-700 rounded"
+                  onClick={() => setDeployLabList([])}
+                >
+                  X
+                </button>
+              )}
+            </th>
             <th className="py-2 px-4 border-r">University</th>
             <th className="py-2 px-4 border-r">Lab Name</th>
             <th className="py-2 px-4 border-r">Discipline</th>

@@ -55,6 +55,7 @@ const ResultViewBox = ({ present, json, loading, setLoading }) => {
       const body = {
         repoName: present.repoName,
         descriptor: jsonEditorRef.current.get(),
+        access_token: localStorage.getItem("accessToken"),
       };
       console.log(body);
       const response = await axios.post(url, body);
@@ -88,7 +89,10 @@ const ResultViewBox = ({ present, json, loading, setLoading }) => {
     setIsValid(isValidData);
     if (!isValidData) {
       setValidationErrors(validate.errors || []);
+      console.log("Validation failed. Errors:");
     } else {
+      let targetDiv = document.querySelector(".jsoneditor-readonly");
+      targetDiv.classList.remove("error");
       setValidationErrors([]);
     }
   };

@@ -2759,6 +2759,21 @@ textarea.w-select {
   background-color: #c8c7c7;
 }
 
+.logout-button {
+  font-size: 18px;
+  padding: 10px;
+  color: white;
+  background-color: #c90101;
+}
+
+.logout-button:hover {
+  background-color: #a90202;
+}
+
+.logout-button:active {
+  background-color: #8e0101;
+}
+
 .result-page-url {
   font-size: 11px;
   color: #878686;
@@ -2950,8 +2965,8 @@ textarea.w-select {
 .deploy-doc-button {
   font-size: 24px;
   padding: 6px;
-  color: #00c9a8;
-  background-color: rgb(231, 231, 231);
+  color: white;
+  background-color: #00c9a8;
   border: #00c9a8 2px solid;
 }
 
@@ -2965,4 +2980,8 @@ textarea.w-select {
   background-color: #036456;
   border: #036456 2px solid;
   color: #fff;
+}
+
+.error {
+  background-color: red;
 }
