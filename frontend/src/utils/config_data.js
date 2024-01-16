@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
 
 const DEFAULT_SECTION = {
   accessibility: "public",
@@ -180,7 +181,10 @@ function useDescriptorSource() {
       "https://raw.githubusercontent.com/virtual-labs/ph3-lab-mgmt/master/validation/schemas/labDescSchema.json"
     )
       .then((response) => response.json())
-      .then((data) => setDescriptor(data));
+      .then((data) => {
+        console.log("descriptorSchema:", data);
+        setDescriptor(data);
+      });
   }, []);
 
   return descriptor;

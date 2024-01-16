@@ -4,6 +4,7 @@ const { google } = require("googleapis");
 const { SPREADSHEET_ID, SPREADSHEET_RANGE } = require("../secrets/spreadsheet");
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
+const axios = require("axios");
 
 const getDataFromSheet = async (spreadsheetId, range) => {
   try {
@@ -227,6 +228,8 @@ const commitDescriptor = async (req, res) => {
     access_token
   );
 
+  console.log("Got SHA");
+
   await octokit.repos.createOrUpdateFileContents({
     owner: process.env.GITHUB_OWNER,
     repo: repoName,
@@ -294,9 +297,122 @@ const addLab = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: "success" });
 };
 
+async function getLatestWorkflowRunId(repoOwner, repoName, workflowId, token) {
+  try {
+    const response = await axios.get(
+      `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/runs`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      }
+    );
+    return response.data.workflow_runs[0].id;
+  } catch (error) {
+    console.error("Error getting latest workflow run ID:", error.message);
+    throw error;
+  }
+}
+
+const deployLab = async (req, res) => {
+  const { access_token, repoName } = req.body;
+  const repoOwner = process.env.GITHUB_OWNER;
+  const branch = process.env.GITHUB_BRANCH;
+  const workflowName = process.env.GITHUB_DEPLOYMENT_WORKFLOW;
+
+  const token = access_token;
+
+  const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github.v3+json",
+  };
+
+  try {
+    const response = await axios.get(apiUrl, { headers });
+    const workflow = response.data.workflows.find(
+      (w) => w.name === workflowName
+    );
+    const workflowId = workflow.id;
+
+    const dispatchResponse = await axios.post(
+      `${apiUrl}/${workflowId}/dispatches`,
+      {
+        ref: branch,
+      },
+      { headers }
+    );
+
+    setTimeout(async () => {
+      const workflowRunId = await getLatestWorkflowRunId(
+        repoOwner,
+        repoName,
+        workflowId,
+        token
+      );
+      console.log(
+        `Workflow "${workflowName}" triggered successfully for branch "${branch}". Workflow Run ID: ${workflowRunId}`
+      );
+      return res
+        .status(StatusCodes.OK)
+        .json({ message: "success", workflowRunId });
+    }, 2000);
+  } catch (error) {
+    console.error("Error triggering workflow:", error.message);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+async function checkWorkflowStatus(repoOwner, repoName, workflowRunId, token) {
+  try {
+    const apiURL = `https://api.github.com/repos/${
+      repoOwner || process.env.GITHUB_OWNER
+    }/${repoName}/actions/runs/${workflowRunId}`;
+    console.log("Checking workflow status:", apiURL);
+    const workflowRunResponse = await axios.get(apiURL, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    const status = workflowRunResponse.data.status;
+    const conclusion = workflowRunResponse.data.conclusion;
+    console.log(
+      `Workflow Run ID ${workflowRunId} Status: ${status} Conclusion: ${conclusion}`,
+      new Date().toLocaleString()
+    );
+
+    return { status, conclusion };
+  } catch (error) {
+    console.error("Error checking workflow status:", error.message);
+    throw error;
+  }
+}
+
+const statusLab = async (req, res) => {
+  const { access_token, repoName, workflowRunId } = req.body;
+  const repoOwner = process.env.GITHUB_OWNER;
+  try {
+    const { status, conclusion } = await checkWorkflowStatus(
+      repoOwner,
+      repoName,
+      workflowRunId,
+      access_token
+    );
+    return res.status(StatusCodes.OK).json({ status, conclusion });
+  } catch (error) {
+    console.error("Error getting workflow status:", error.message);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getLabs,
   getLabDescriptor,
   commitDescriptor,
   addLab,
+  deployLab,
+  statusLab,
 };

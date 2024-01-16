@@ -47,6 +47,9 @@ const QueryBox = ({
 
   return (
     <>
+      <div className=" container-header flex flex-row p-2 h-14">
+        <div className="section-type view-box-link">Lab Search</div>
+      </div>
       <div className="flex w-full pt-0">
         <form
           id="email-form"

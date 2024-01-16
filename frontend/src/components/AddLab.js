@@ -17,7 +17,7 @@ const AddLab = ({ setModal }) => {
     }
     if (loading || addLoading) return;
     const labURL = lab_url.slice();
-    const descriptorURL = labURL + "/blob/master/lab-descriptor.json";
+    const descriptorURL = labURL + "/blob/main/lab-descriptor.json";
     const url =
       SEARCH_API +
       "/get_descriptor?link=" +

@@ -115,7 +115,7 @@ const ResultViewBox = ({ present, json, loading, setLoading }) => {
         </div>
       )}
 
-      <div className=" container-header flex flex-row p-2 h-18">
+      <div className=" container-header flex flex-row p-2 h-18 border-l-2 border-gray-200">
         <div
           className="section-type view-box-link"
           onClick={() => window.open(present.descriptorLink, "_blank")}
@@ -144,7 +144,7 @@ const ResultViewBox = ({ present, json, loading, setLoading }) => {
           Save
         </button>
       </div>
-      <div className="flex-1 flex flex-col p-0 overflow-auto">
+      <div className="flex-1 flex flex-col p-0 overflow-auto border-l-2 border-gray-200">
         <Editor ref={setRef} value={json} onChange={handleChange} />
       </div>
     </>

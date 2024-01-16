@@ -10,6 +10,7 @@ import { SearchListProvider } from "./utils/useSearchList";
 import AddLab from "./components/AddLab";
 import DeployTable from "./components/DeployTable";
 import { useDeployLabList } from "./utils/useLabList";
+import { DeployLabListProvider } from "./utils/useDeployList";
 import { USER_API } from "./utils/config_data";
 
 function Main() {
@@ -81,32 +82,34 @@ function Main() {
   return (
     <SearchListProvider>
       <LabListProvider>
-        <DescriptorTemplateProvider>
-          <div className="flex flex-col h-screen w-screen overflow-hidden">
-            {modal && <AddLab setModal={setModal} />}
-            <div className="flex">
-              <NavBar
-                setModal={setModal}
-                setShowDeployTab={setShowDeployTab}
-                showDeployTab={showDeployTab}
-                userInfo={userInfo}
-              />
+        <DeployLabListProvider>
+          <DescriptorTemplateProvider>
+            <div className="flex flex-col h-screen w-screen overflow-hidden">
+              {modal && <AddLab setModal={setModal} />}
+              <div className="flex">
+                <NavBar
+                  setModal={setModal}
+                  setShowDeployTab={setShowDeployTab}
+                  showDeployTab={showDeployTab}
+                  userInfo={userInfo}
+                />
+              </div>
+              {showDeployTab ? (
+                <DeployLabComponent />
+              ) : (
+                <LabComponent
+                  {...{
+                    setPresent,
+                    jsonData,
+                    loading,
+                    present,
+                    setLoading,
+                  }}
+                />
+              )}
             </div>
-            {showDeployTab ? (
-              <DeployLabComponent />
-            ) : (
-              <LabComponent
-                {...{
-                  setPresent,
-                  jsonData,
-                  loading,
-                  present,
-                  setLoading,
-                }}
-              />
-            )}
-          </div>
-        </DescriptorTemplateProvider>
+          </DescriptorTemplateProvider>
+        </DeployLabListProvider>
       </LabListProvider>
     </SearchListProvider>
   );
