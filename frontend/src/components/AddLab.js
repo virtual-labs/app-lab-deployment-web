@@ -65,7 +65,7 @@ const AddLab = ({ setModal }) => {
       const body = lab;
       const response = await axios.post(url, body);
       if (response.status >= 200 && response.status < 300) {
-        alert("Lab added successfully");
+        alert(response.data.message);
       } else {
         alert("Error adding Lab: " + response.data.msg + ". Try again later");
         console.log("Error updating JSON file:", response.data.msg);

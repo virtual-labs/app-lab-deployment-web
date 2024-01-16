@@ -1,7 +1,11 @@
 const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError } = require("../errors");
 const { google } = require("googleapis");
-const { SPREADSHEET_ID, SPREADSHEET_RANGE } = require("../secrets/spreadsheet");
+const {
+  SPREADSHEET_ID,
+  SPREADSHEET_RANGE,
+  SPREADSHEET_NAME,
+} = require("../secrets/spreadsheet");
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
 const axios = require("axios");
@@ -81,7 +85,10 @@ const getLabList = async () => {
     const spreadsheetId = SPREADSHEET_ID;
     const range = SPREADSHEET_RANGE;
     const readData = await getDataFromSheet(spreadsheetId, range);
-    const rows = readData.data.sheets[0].data[0].rowData;
+    let rows = readData.data.sheets[0].data[0].rowData;
+    rows = rows.map((row, i) => {
+      return { ...row, index: i };
+    });
     let labs = rows.filter(
       (row) => row.hasOwnProperty("values") && row.values.length === 6
     );
@@ -119,6 +126,7 @@ const getLabList = async () => {
           repoLink,
           repoName,
           descriptorLink,
+          index: lab.index,
         });
       }
     }
@@ -250,6 +258,74 @@ const commitDescriptor = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: "success" });
 };
 
+async function findRowIndex(spreadsheetId, sheetName, searchData, authClient) {
+  const response = await google.sheets("v4").spreadsheets.values.get({
+    auth: authClient,
+    spreadsheetId,
+    range: `${sheetName}!A:Z`,
+  });
+
+  const values = response.data.values;
+
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    console.log(row);
+    // const match = row[key] === searchData;
+    // if (match) {
+    //   return i + 1;
+    // }
+  }
+
+  return -1;
+}
+
+const updateRow = async (
+  spreadsheetId,
+  sheetName,
+  repoName,
+  university,
+  labName,
+  labLink,
+  discipline,
+  labURL,
+  descriptorURL,
+  rowIndex
+) => {
+  const sheetsAuth = new google.auth.GoogleAuth({
+    keyFile: "./secrets/service-account-secret.json",
+    scopes: "https://www.googleapis.com/auth/spreadsheets",
+  });
+
+  const authClient = await sheetsAuth.getClient();
+
+  try {
+    const rows = [
+      [
+        rowIndex,
+        university,
+        `=HYPERLINK("${labLink}", "${labName}")`,
+        discipline,
+        `=HYPERLINK("${labURL}", "Repo Link")`,
+        `=HYPERLINK("${descriptorURL}", "Lab Descriptor Link")`,
+      ],
+    ];
+
+    await google.sheets("v4").spreadsheets.values.update({
+      auth: authClient,
+      spreadsheetId,
+      range: `${sheetName}!A${rowIndex}:Z${rowIndex}`,
+      valueInputOption: "USER_ENTERED",
+      resource: {
+        majorDimension: "ROWS",
+        values: rows,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating row:", error);
+    throw error;
+  }
+};
+
 const addLab = async (req, res) => {
   const { university, labName, labLink, discipline, labURL, descriptorURL } =
     req.body;
@@ -277,10 +353,26 @@ const addLab = async (req, res) => {
     }
   }
   const labList = await getLabList();
-
-  const f = labList.filter((lab) => lab.repoLink === labURL);
+  let idx = -1;
+  const f = labList.filter((lab, i) => {
+    return lab.repoLink === labURL;
+  });
   if (f.length !== 0) {
-    throw new BadRequestError(`lab already exists`);
+    await updateRow(
+      SPREADSHEET_ID,
+      SPREADSHEET_NAME,
+      f[0].repoName,
+      university,
+      labName,
+      labLink,
+      discipline,
+      labURL,
+      descriptorURL,
+      f[0].index + 1
+    );
+    return res
+      .status(StatusCodes.OK)
+      .json({ message: "Lab updated successfully" });
   }
 
   const rows = [
@@ -294,7 +386,7 @@ const addLab = async (req, res) => {
     ],
   ];
   await appendIntoSheet(rows);
-  return res.status(StatusCodes.OK).json({ message: "success" });
+  return res.status(StatusCodes.OK).json({ message: "Lab added successfully" });
 };
 
 async function getLatestWorkflowRunId(repoOwner, repoName, workflowId, token) {

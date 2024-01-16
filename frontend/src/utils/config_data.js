@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
 
 const DEFAULT_SECTION = {
   accessibility: "public",
