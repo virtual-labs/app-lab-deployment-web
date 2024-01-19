@@ -24,8 +24,8 @@ function Main() {
   useEffect(() => {
     const url =
       SEARCH_API +
-      "/get_descriptor?link=" +
-      present.descriptorLink +
+      "/get_descriptor?reponame=" +
+      present.repoName +
       "&access_token=" +
       localStorage.getItem("accessToken");
     async function fetchData() {

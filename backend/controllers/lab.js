@@ -34,7 +34,7 @@ const getDataFromSheet = async (spreadsheetId, range) => {
   }
 };
 
-const appendIntoSheet = async (row) => {
+const appendIntoSheet = async (row, spreadsheetId, range) => {
   try {
     const auth = new google.auth.GoogleAuth({
       keyFile: "./secrets/service-account-secret.json",
@@ -50,13 +50,12 @@ const appendIntoSheet = async (row) => {
       values: row,
     };
     const result = await googleSheetsInstance.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: SPREADSHEET_RANGE,
+      spreadsheetId,
+      range,
       valueInputOption: "USER_ENTERED",
       insertDataOption: "INSERT_ROWS",
       resource: resource,
     });
-    // console.log(result);
     return result.data.updates.updatedCells;
   } catch (error) {
     console.log(error);
@@ -159,10 +158,10 @@ const getLabs = async (req, res) => {
 };
 
 const getLabDescriptor = async (req, res) => {
-  const { link, access_token } = req.query;
+  const { reponame, access_token, want_descriptor_url } = req.query;
 
-  if (!link) {
-    throw new BadRequestError(`descriptor link missing`);
+  if (!reponame) {
+    throw new BadRequestError(`repository name missing`);
   }
 
   if (!access_token) {
@@ -173,13 +172,10 @@ const getLabDescriptor = async (req, res) => {
     auth: access_token,
   });
 
-  const tokens = link.split("/");
-
-  const owner = tokens[3];
-  const repo = tokens[4];
-  const branch = tokens[6];
-  const file = tokens[7];
-
+  const owner = process.env.GITHUB_OWNER;
+  const repo = reponame;
+  const branch = await getDefaultGithubBranch(repo, owner, access_token);
+  const file = "lab-descriptor.json";
   const resp = await octokit.request(
     `GET /repos/${owner}/${repo}/contents/${file}?ref=${branch}`,
     {
@@ -194,8 +190,11 @@ const getLabDescriptor = async (req, res) => {
   );
 
   const asciiString = atob(resp.data.content);
-  const descriptorJson = JSON.parse(asciiString);
+  let descriptorJson = JSON.parse(asciiString);
 
+  if (want_descriptor_url) {
+    descriptorJson.descriptorURL = resp.data.html_url;
+  }
   return res.status(StatusCodes.OK).json(descriptorJson);
 };
 
@@ -228,11 +227,16 @@ const commitDescriptor = async (req, res) => {
 
   const content = JSON.stringify(descriptor, null, 2);
   const contentEncoded = Base64.encode(content);
+  const branch = await getDefaultGithubBranch(
+    repoName,
+    process.env.GITHUB_OWNER,
+    access_token
+  );
   const sha = await getBlobSHA(
     process.env.GITHUB_OWNER,
     repoName,
     "lab-descriptor.json",
-    process.env.GITHUB_BRANCH,
+    branch,
     access_token
   );
 
@@ -244,7 +248,7 @@ const commitDescriptor = async (req, res) => {
     path: "lab-descriptor.json",
     message: "Updated lab-descriptor.json programatically",
     content: contentEncoded,
-    branch: process.env.GITHUB_BRANCH,
+    branch: branch,
     committer: {
       name: `Lab Deployment Bot`,
       email: "vlabs-lab-deployment@gmail.com",
@@ -257,27 +261,6 @@ const commitDescriptor = async (req, res) => {
   });
   return res.status(StatusCodes.OK).json({ message: "success" });
 };
-
-async function findRowIndex(spreadsheetId, sheetName, searchData, authClient) {
-  const response = await google.sheets("v4").spreadsheets.values.get({
-    auth: authClient,
-    spreadsheetId,
-    range: `${sheetName}!A:Z`,
-  });
-
-  const values = response.data.values;
-
-  for (let i = 1; i < values.length; i++) {
-    const row = values[i];
-    console.log(row);
-    // const match = row[key] === searchData;
-    // if (match) {
-    //   return i + 1;
-    // }
-  }
-
-  return -1;
-}
 
 const updateRow = async (
   spreadsheetId,
@@ -385,7 +368,7 @@ const addLab = async (req, res) => {
       `=HYPERLINK("${descriptorURL}", "Lab Descriptor Link")`,
     ],
   ];
-  await appendIntoSheet(rows);
+  await appendIntoSheet(rows, SPREADSHEET_ID, SPREADSHEET_RANGE);
   return res.status(StatusCodes.OK).json({ message: "Lab added successfully" });
 };
 
@@ -410,7 +393,11 @@ async function getLatestWorkflowRunId(repoOwner, repoName, workflowId, token) {
 const deployLab = async (req, res) => {
   const { access_token, repoName } = req.body;
   const repoOwner = process.env.GITHUB_OWNER;
-  const branch = process.env.GITHUB_BRANCH;
+  const branch = await getDefaultGithubBranch(
+    repoName,
+    repoOwner,
+    access_token
+  );
   const workflowName = process.env.GITHUB_DEPLOYMENT_WORKFLOW;
 
   const token = access_token;
@@ -498,6 +485,15 @@ const statusLab = async (req, res) => {
     console.error("Error getting workflow status:", error.message);
     return res.status(400).json({ message: error.message });
   }
+};
+
+const getDefaultGithubBranch = async (repoName, owner, access_token) => {
+  const octokit = new Octokit({ auth: access_token });
+  const response = await octokit.repos.get({
+    owner,
+    repo: repoName,
+  });
+  return response.data.default_branch;
 };
 
 module.exports = {

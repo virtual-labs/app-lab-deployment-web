@@ -17,13 +17,14 @@ const AddLab = ({ setModal }) => {
     }
     if (loading || addLoading) return;
     const labURL = lab_url.slice();
-    const descriptorURL = labURL + "/blob/main/lab-descriptor.json";
+    const repoName = labURL.split("/").slice(-1)[0];
     const url =
       SEARCH_API +
-      "/get_descriptor?link=" +
-      descriptorURL +
+      "/get_descriptor?reponame=" +
+      repoName +
       "&access_token=" +
-      localStorage.getItem("accessToken");
+      localStorage.getItem("accessToken") +
+      "&want_descriptor_url=1";
     async function fetchData() {
       const config = {
         method: "GET",
@@ -49,7 +50,7 @@ const AddLab = ({ setModal }) => {
         labLink: response.baseUrl,
         discipline: response.broadArea.name,
         labURL,
-        descriptorURL,
+        descriptorURL: response.descriptorURL,
       };
       setLab(labObject);
       console.log(labObject);
