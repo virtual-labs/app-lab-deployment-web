@@ -1,15 +1,13 @@
 import React from "react";
 import NavImg from "../media/download.png";
 import { useDeployLabList } from "../utils/useLabList";
-import { useDeployedLabList } from "../utils/useDeployList";
 
 import axios from "axios";
 
 import { SEARCH_API } from "../utils/config_data";
 
 const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
-  const { deployLabList } = useDeployLabList();
-  const { deployedLabList, setDeployedLabList } = useDeployedLabList();
+  const { deployLabList, setDeployLabList } = useDeployLabList();
   const [deployLoading, setDeployLoading] = React.useState(false);
   let isDeploying = false || deployLoading;
 
@@ -29,15 +27,75 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
     return "";
   };
 
+  const getNextTag = (latestTag) => {
+    if (latestTag === "") return "1.0.0";
+    latestTag = latestTag.slice(1);
+    const [major, minor, patch] = latestTag.split(".");
+    return `${major}.${minor}.${parseInt(patch) + 1}`;
+  };
+
+  const updateDeployList = async (repoName, obj) => {
+    setDeployLabList((prev) =>
+      prev.map((lab) => {
+        if (lab.repoName === repoName) {
+          return { ...lab, ...obj };
+        }
+        return lab;
+      })
+    );
+  };
+
+  const getStatus = async (item) => {
+    const response = await axios.post(SEARCH_API + "/status", {
+      repoName: item.repoName,
+      workflowRunId: item.workflowRunId,
+      access_token: localStorage.getItem("accessToken"),
+    });
+    const { status, conclusion } = response.data;
+    updateDeployList(item.repoName, { status, conclusion });
+
+    if (conclusion === null) {
+      setTimeout(async () => await getStatus(item), 5000);
+    } else if (conclusion === "success") {
+      try {
+        let newTag = "v" + getNextTag(item.latestTag);
+        updateDeployList(item.repoName, { status: "adding_tag" });
+        let resp = await axios.post(SEARCH_API + "/create_tag", {
+          repo: item.repoName,
+          tagName: newTag,
+          access_token: localStorage.getItem("accessToken"),
+        });
+        if (resp.status !== 200) {
+          throw new Error("Error creating tag");
+        }
+        updateDeployList(item.repoName, { status: "adding_analytics" });
+        resp = await axios.post(SEARCH_API + "/add_analytics", item);
+        if (resp.status !== 200) {
+          throw new Error("Error adding analytics");
+        }
+        updateDeployList(item.repoName, { status: "done", latestTag: newTag });
+      } catch (err) {
+        console.log(err);
+        setDeployLabList((prev) =>
+          prev.map((lab) => {
+            if (lab.repoName === item.repoName) {
+              return { ...lab, status: "failed", conclusion: "failed" };
+            }
+            return lab;
+          })
+        );
+      }
+    }
+  };
+
   const deployLabs = async () => {
     try {
       if (isDeploying) return;
       console.log("deploying labs");
-      setDeployedLabList(
+      setDeployLabList(
         deployLabList.map((lab) => ({
           ...lab,
           status: "waiting",
-          conclusion: null,
         }))
       );
       setDeployLoading(true);
@@ -59,7 +117,12 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
           }
         })
       );
-      setDeployedLabList(responses);
+      setDeployLabList(responses);
+      responses.forEach((lab) => {
+        if (lab.status === "started") {
+          getStatus(lab);
+        }
+      });
       console.log("Data from all requests:", responses);
     } catch (error) {
       console.error(error);
@@ -69,7 +132,7 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
     }
   };
 
-  deployedLabList.forEach((lab) => {
+  deployLabList.forEach((lab) => {
     isDeploying =
       isDeploying ||
       lab.status === "started" ||

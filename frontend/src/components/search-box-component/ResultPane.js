@@ -4,12 +4,7 @@ import ResultBox from "./ResultBox";
 import { useDeployLabList } from "../../utils/useLabList";
 
 const ResultPane = ({ loader, results, setPresent, present }) => {
-  const { deployLabList, setDeployLabList } = useDeployLabList();
-
-  const addToList = (lab) => {
-    if (deployLabList.includes(lab)) return;
-    setDeployLabList([...deployLabList, lab]);
-  };
+  const { deployLabList } = useDeployLabList();
 
   return (
     <>
@@ -31,7 +26,6 @@ const ResultPane = ({ loader, results, setPresent, present }) => {
                 result={result}
                 setPresent={setPresent}
                 present={present}
-                addToList={addToList}
                 inList={
                   deployLabList.filter(
                     (lab) => lab.repoName === result.repoName

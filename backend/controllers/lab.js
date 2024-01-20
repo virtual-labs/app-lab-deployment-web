@@ -5,6 +5,8 @@ const {
   SPREADSHEET_ID,
   SPREADSHEET_RANGE,
   SPREADSHEET_NAME,
+  SPREADSHEET_HOSTING_NAME,
+  SPREADSHEET_HOSTING_RANGE,
 } = require("../secrets/spreadsheet");
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
@@ -336,7 +338,6 @@ const addLab = async (req, res) => {
     }
   }
   const labList = await getLabList();
-  let idx = -1;
   const f = labList.filter((lab, i) => {
     return lab.repoLink === labURL;
   });
@@ -496,6 +497,118 @@ const getDefaultGithubBranch = async (repoName, owner, access_token) => {
   return response.data.default_branch;
 };
 
+const getNextTag = (latestTag) => {
+  if (latestTag === "") return "1.0.0";
+  latestTag = latestTag.slice(1);
+  const [major, minor, patch] = latestTag.split(".");
+  return `${major}.${minor}.${parseInt(patch) + 1}`;
+};
+
+const createTag = async (req, res) => {
+  try {
+    const { repo, access_token, tagName } = req.body;
+    const owner = process.env.GITHUB_OWNER;
+    const octokit = new Octokit({
+      auth: access_token,
+    });
+    const tagMessage = `Release version ${tagName}`;
+    const branch = await getDefaultGithubBranch(repo, owner, access_token);
+
+    const { data: latestCommit } = await octokit.repos.getBranch({
+      owner,
+      repo,
+      branch,
+    });
+
+    await octokit.git.createTag({
+      owner,
+      repo,
+      tag: tagName,
+      message: tagMessage,
+      object: latestCommit.commit.sha,
+      type: "commit",
+    });
+
+    await octokit.git.createRef({
+      owner,
+      repo,
+      ref: `refs/tags/${tagName}`,
+      sha: latestCommit.commit.sha,
+    });
+    return res.status(StatusCodes.OK).json({ message: "success" });
+  } catch (err) {
+    if (err.status === 422) {
+      return res.status(StatusCodes.OK).json({ message: "success" });
+    }
+    console.log(err);
+    return res.status(StatusCodes.BAD_REQUEST).json({ message: err.message });
+  }
+};
+
+const addAnalytics = async (req, res) => {
+  const {
+    university,
+    repoLink,
+    labName,
+    labLink,
+    repoName,
+    latestTag,
+    hostingURL,
+    hostingRequester,
+  } = req.body;
+
+  const newTag = "v" + getNextTag(latestTag);
+  const currentTagURL = `https://github.com/${process.env.GITHUB_OWNER}/${repoName}/releases/tag/${newTag}`;
+  const prevTagURL = `https://github.com/${process.env.GITHUB_OWNER}/${repoName}/releases/tag/${latestTag}`;
+  const prevTagHyperlink =
+    latestTag === "" ? `` : `=HYPERLINK("${prevTagURL}", "${latestTag}")`;
+  const currentTagHyperlink = `=HYPERLINK("${currentTagURL}", "${newTag}")`;
+
+  let currentDate = new Date();
+  let day = currentDate.getDate();
+  let month = currentDate.getMonth() + 1;
+  let year = currentDate.getFullYear();
+  let formattedDate = `${month}/${day}/${year}`;
+
+  const rows = [
+    [
+      "",
+      university,
+      `=HYPERLINK("${repoLink}", "${labName}")`,
+      `=HYPERLINK("${labLink}", "Hosted")`,
+      `GitHub VL`,
+      currentTagHyperlink,
+      prevTagHyperlink,
+      formattedDate,
+      formattedDate,
+      `=HYPERLINK("${hostingURL}", "Link")`,
+      hostingRequester,
+      "Approved",
+    ],
+  ];
+  await appendIntoSheet(rows, SPREADSHEET_ID, SPREADSHEET_HOSTING_RANGE);
+  return res
+    .status(StatusCodes.OK)
+    .json({ message: "Analytics added successfully" });
+};
+
+const latestTag = async (repo, owner, access_token) => {
+  const octokit = new Octokit({ auth: access_token });
+  const response = await octokit.repos.listTags({
+    owner,
+    repo,
+  });
+  const tags = response.data.map((tag) => tag.name);
+  const latestTag = tags[0] || "";
+  return latestTag;
+};
+
+const getLatestTag = async (req, res) => {
+  const { access_token, repoName } = req.query;
+  const tag = await latestTag(repoName, process.env.GITHUB_OWNER, access_token);
+  return res.status(StatusCodes.OK).json({ latestTag: tag, repoName });
+};
+
 module.exports = {
   getLabs,
   getLabDescriptor,
@@ -503,4 +616,7 @@ module.exports = {
   addLab,
   deployLab,
   statusLab,
+  addAnalytics,
+  getLatestTag,
+  createTag,
 };

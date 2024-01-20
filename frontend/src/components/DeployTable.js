@@ -2,9 +2,6 @@ import React from "react";
 import "../css/index.css";
 import "../css/App.css";
 import { useDeployLabList } from "../utils/useLabList";
-import { useDeployedLabList } from "../utils/useDeployList";
-import axios from "axios";
-import { SEARCH_API } from "../utils/config_data";
 import ReactLoading from "react-loading";
 import Tick from "../media/accept.png";
 import Failed from "../media/remove.png";
@@ -12,41 +9,21 @@ import Start from "../media/play.png";
 
 const DeployTable = ({ data }) => {
   const { deployLabList, setDeployLabList } = useDeployLabList();
-  const { deployedLabList, setDeployedLabList } = useDeployedLabList();
+
+  let isDeploying = false;
+
+  deployLabList.forEach((lab) => {
+    isDeploying =
+      isDeploying ||
+      lab.status === "started" ||
+      lab.status === "queued" ||
+      lab.status === "in_progress" ||
+      lab.status === "waiting";
+  });
 
   const remove = (repoName) => {
+    if (isDeploying) return;
     setDeployLabList(deployLabList.filter((lab) => lab.repoName !== repoName));
-  };
-
-  const getDeploymentStatus = (repoName) => {
-    const lab = deployedLabList?.find((lab) => lab.repoName === repoName);
-    if (lab) {
-      if (lab.status === "started") {
-        getStatus(lab);
-      }
-      return { status: lab.status, conclusion: lab.conclusion };
-    }
-    return { status: "-", conclusion: null };
-  };
-
-  const getStatus = async (item) => {
-    const response = await axios.post(SEARCH_API + "/status", {
-      repoName: item.repoName,
-      workflowRunId: item.workflowRunId,
-      access_token: localStorage.getItem("accessToken"),
-    });
-    const { status, conclusion } = response.data;
-    setDeployedLabList((prev) =>
-      prev.map((lab) => {
-        if (lab.repoName === item.repoName) {
-          return { ...lab, status, conclusion };
-        }
-        return lab;
-      })
-    );
-    if (conclusion === null) {
-      setTimeout(async () => await getStatus(item), 5000);
-    }
   };
 
   const format = (str) => {
@@ -57,7 +34,15 @@ const DeployTable = ({ data }) => {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    if (str === "queued" || str === "in_progress" || str === "waiting")
+    const waiting = [
+      "queued",
+      "in_progress",
+      "waiting",
+      "adding_tag",
+      "adding_analytics",
+    ];
+
+    if (waiting.includes(str))
       return (
         <span className="flex flex-row items-center justify-center">
           <ReactLoading
@@ -71,7 +56,7 @@ const DeployTable = ({ data }) => {
         </span>
       );
 
-    if (str === "success" || str === "completed") {
+    if (str === "success" || str === "completed" || str === "done") {
       return (
         <span className="flex flex-row items-center justify-center">
           <img src={Tick} alt="tick" className="w-6 h-6" />
@@ -102,6 +87,13 @@ const DeployTable = ({ data }) => {
     return str;
   };
 
+  const getNextTag = (latestTag) => {
+    if (latestTag === "") return "1.0.0";
+    latestTag = latestTag.slice(1);
+    const [major, minor, patch] = latestTag.split(".");
+    return `${major}.${minor}.${parseInt(patch) + 1}`;
+  };
+
   return (
     <div className="w-full h-full overflow-auto">
       <table className="w-full border-collapse border border-gray-300">
@@ -123,13 +115,17 @@ const DeployTable = ({ data }) => {
             <th className="py-2 px-4 border-r">Lab Link</th>
             <th className="py-2 px-4 border-r">Repo</th>
             <th className="py-2 px-4 border-r">Descriptor URL</th>
+            <th className="py-2 px-4 border-r">Latest tag</th>
+            <th className="py-2 px-4 border-r">New tag</th>
+            <th className="py-2 px-4 border-r">Hosting URL</th>
+            <th className="py-2 px-4 border-r">Requester</th>
             <th className="py-2 px-4 border-r">Status</th>
             <th className="py-2 px-4 border-r">Conclusion</th>
           </tr>
         </thead>
         <tbody>
           {data.map((item, index) => {
-            const { status, conclusion } = getDeploymentStatus(item.repoName);
+            const newTag = getNextTag(item.latestTag);
             return (
               <tr key={index} className="hover:bg-gray-100">
                 <td className="py-2 px-4 border-r">
@@ -173,10 +169,30 @@ const DeployTable = ({ data }) => {
                     {"Link"}
                   </a>
                 </td>
+
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
-                  {format(status)}
+                  {item.latestTag}
                 </td>
-                <td className="py-2 px-4 border-r">{format(conclusion)}</td>
+                <td className="py-2 px-4 border-r h-16 items-center justify-center">
+                  {"v" + newTag}
+                </td>
+                <td className="py-2 px-4 border-r">
+                  <a
+                    href={item.hostingURL}
+                    target="_blank"
+                    className="table-link"
+                    rel="noopener noreferrer"
+                  >
+                    {"Link"}
+                  </a>
+                </td>
+                <td className="py-2 px-4 border-r">{item.hostingRequester}</td>
+                <td className="py-2 px-4 border-r h-16 items-center justify-center">
+                  {format(item.status)}
+                </td>
+                <td className="py-2 px-4 border-r">
+                  {format(item.conclusion)}
+                </td>
               </tr>
             );
           })}
