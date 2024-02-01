@@ -6,7 +6,14 @@ import axios from "axios";
 
 import { SEARCH_API } from "../utils/config_data";
 
-const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
+const NavBar = ({
+  setModal,
+  showDeployTab,
+  setShowDeployTab,
+  userInfo,
+  viewAnalytics,
+  setViewAnalytics,
+}) => {
   const { deployLabList, setDeployLabList } = useDeployLabList();
   const [deployLoading, setDeployLoading] = React.useState(false);
   let isDeploying = false || deployLoading;
@@ -59,21 +66,31 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
     } else if (conclusion === "success") {
       try {
         let newTag = "v" + getNextTag(item.latestTag);
-        updateDeployList(item.repoName, { status: "adding_tag" });
-        let resp = await axios.post(SEARCH_API + "/create_tag", {
-          repo: item.repoName,
-          tagName: newTag,
-          access_token: localStorage.getItem("accessToken"),
-        });
-        if (resp.status !== 200) {
-          throw new Error("Error creating tag");
+        let resp;
+        if (item.revert === false) {
+          updateDeployList(item.repoName, { status: "adding_tag" });
+          let resp = await axios.post(SEARCH_API + "/create_tag", {
+            repo: item.repoName,
+            tagName: newTag,
+            access_token: localStorage.getItem("accessToken"),
+          });
+          if (resp.status !== 200) {
+            throw new Error("Error creating tag");
+          }
         }
+
         updateDeployList(item.repoName, { status: "adding_analytics" });
         resp = await axios.post(SEARCH_API + "/add_analytics", item);
         if (resp.status !== 200) {
           throw new Error("Error adding analytics");
         }
-        updateDeployList(item.repoName, { status: "done", latestTag: newTag });
+        if (item.revert === true)
+          updateDeployList(item.repoName, { status: "done" });
+        else
+          updateDeployList(item.repoName, {
+            status: "done",
+            latestTag: newTag,
+          });
       } catch (err) {
         console.log(err);
         setDeployLabList((prev) =>
@@ -88,9 +105,21 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
     }
   };
 
+  const deployLab = async (lab) => {
+    const response = await axios.post(SEARCH_API + "/deploy", {
+      access_token: localStorage.getItem("accessToken"),
+      repoName: lab.repoName,
+    });
+    let data = response.data;
+    return data;
+  };
+
   const deployLabs = async () => {
     try {
       if (isDeploying) return;
+
+      console.log("deploying labs", deployLabList);
+      // return;
       console.log("deploying labs");
       setDeployLabList(
         deployLabList.map((lab) => ({
@@ -102,12 +131,19 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
       const responses = await Promise.all(
         deployLabList.map(async (lab) => {
           try {
-            const response = await axios.post(SEARCH_API + "/deploy", {
-              access_token: localStorage.getItem("accessToken"),
-              repoName: lab.repoName,
-            });
-            let data = response.data;
-            return { ...data, ...lab, status: "started", conclusion: null };
+            if (lab.revert === true) {
+              updateDeployList(lab.repoName, { status: "reverting" });
+              await axios.post(SEARCH_API + "/revert_tag", {
+                access_token: localStorage.getItem("accessToken"),
+                repoName: lab.repoName,
+                tagName: lab.prevTag,
+              });
+              const data = await deployLab(lab);
+              return { ...data, ...lab, status: "started", conclusion: null };
+            } else {
+              const data = await deployLab(lab);
+              return { ...data, ...lab, status: "started", conclusion: null };
+            }
           } catch (error) {
             return {
               ...lab,
@@ -170,6 +206,18 @@ const NavBar = ({ setModal, showDeployTab, setShowDeployTab, userInfo }) => {
               onClick={() => setModal(true)}
             >
               Add Lab
+            </button>
+
+            <button
+              className={`${
+                viewAnalytics ? "active" : ""
+              } insert-doc-button mr-2`}
+              onClick={() => {
+                if (isDeploying) return;
+                setViewAnalytics(!viewAnalytics);
+              }}
+            >
+              Analytics
             </button>
             <button
               className="logout-button"

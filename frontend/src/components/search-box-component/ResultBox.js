@@ -20,7 +20,7 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
           "&repoName=" +
           lab.repoName
       );
-      const { latestTag } = response.data;
+      const { latestTag, prevTag } = response.data;
       let hostingURL = prompt("Enter hosting request URL:");
       if (!hostingURL) {
         alert("Please enter a valid URL");
@@ -38,6 +38,7 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
         ...lab,
         latestTag,
         hostingURL,
+        prevTag,
         hostingRequester,
         status: "-",
         conclusion: null,

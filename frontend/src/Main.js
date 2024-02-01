@@ -11,6 +11,7 @@ import AddLab from "./components/AddLab";
 import DeployTable from "./components/DeployTable";
 import { useDeployLabList } from "./utils/useLabList";
 import { USER_API } from "./utils/config_data";
+import AnalyticsTable from "./components/AnalyticsTable";
 
 function Main() {
   const [present, setPresent] = useState(DEFAULT_SECTION);
@@ -19,6 +20,7 @@ function Main() {
   const [modal, setModal] = useState(false);
   const [userInfo, setUserInfo] = useState({});
   const [showDeployTab, setShowDeployTab] = useState(false);
+  const [viewAnalytics, setViewAnalytics] = useState(false);
 
   useEffect(() => {
     const url =
@@ -90,21 +92,25 @@ function Main() {
                 setShowDeployTab={setShowDeployTab}
                 showDeployTab={showDeployTab}
                 userInfo={userInfo}
+                setViewAnalytics={setViewAnalytics}
+                viewAnalytics={viewAnalytics}
               />
             </div>
-            {showDeployTab ? (
-              <DeployLabComponent />
-            ) : (
-              <LabComponent
-                {...{
-                  setPresent,
-                  jsonData,
-                  loading,
-                  present,
-                  setLoading,
-                }}
-              />
-            )}
+            {!viewAnalytics &&
+              (showDeployTab ? (
+                <DeployLabComponent />
+              ) : (
+                <LabComponent
+                  {...{
+                    setPresent,
+                    jsonData,
+                    loading,
+                    present,
+                    setLoading,
+                  }}
+                />
+              ))}
+            {viewAnalytics && <AnalyticsComponent />}
           </div>
         </DescriptorTemplateProvider>
       </LabListProvider>
@@ -141,6 +147,16 @@ const LabComponent = ({
           loading={loading}
           setLoading={setLoading}
         />
+      </div>
+    </div>
+  );
+};
+
+const AnalyticsComponent = () => {
+  return (
+    <div className="flex flex-1 flex-row flex-block overflow-hidden">
+      <div className="flex flex-col w-full overflow-hidden">
+        <AnalyticsTable />
       </div>
     </div>
   );

@@ -11,8 +11,9 @@ const {
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
 const axios = require("axios");
+const { raw } = require("express");
 
-const getDataFromSheet = async (spreadsheetId, range) => {
+const getDataFromSheet = async (spreadsheetId, range, req = null) => {
   try {
     const auth = new google.auth.GoogleAuth({
       keyFile: "./secrets/service-account-secret.json",
@@ -29,6 +30,15 @@ const getDataFromSheet = async (spreadsheetId, range) => {
       ranges: range,
       fields: "sheets(data(rowData(values(hyperlink,userEnteredValue))))",
     });
+    if (req === "RAW") {
+      const rawData = await googleSheetsInstance.spreadsheets.values.get({
+        spreadsheetId: spreadsheetId,
+        range: range,
+        dateTimeRenderOption: "FORMATTED_STRING",
+      });
+      return { readData, rawData: rawData.data.values };
+    }
+
     return readData;
   } catch (error) {
     console.log(error);
@@ -68,12 +78,20 @@ const appendIntoSheet = async (row, spreadsheetId, range) => {
 const getLinkAndName = (obj) => {
   let link = "";
   let name = "";
+  if (!obj.userEnteredValue) return { link, name };
   if (obj.userEnteredValue.stringValue) {
     name = obj.userEnteredValue.stringValue.trim();
-  } else if (obj.userEnteredValue.formulaValue) {
+  }
+  if (obj.userEnteredValue.formulaValue) {
     name = obj.userEnteredValue.formulaValue.trim();
     name = name.split('"');
     name = name[name.length - 2];
+  }
+  if (obj.userEnteredValue.numberValue) {
+    return {
+      link,
+      number: obj.userEnteredValue.numberValue,
+    };
   }
   if (obj.hyperlink) {
     link = obj.hyperlink;
@@ -437,7 +455,7 @@ const deployLab = async (req, res) => {
       return res
         .status(StatusCodes.OK)
         .json({ message: "success", workflowRunId });
-    }, 2000);
+    }, 5000);
   } catch (error) {
     console.error("Error triggering workflow:", error.message);
     return res.status(400).json({ message: error.message });
@@ -555,9 +573,11 @@ const addAnalytics = async (req, res) => {
     latestTag,
     hostingURL,
     hostingRequester,
+    revert,
+    prevTag,
   } = req.body;
 
-  const newTag = "v" + getNextTag(latestTag);
+  const newTag = revert ? prevTag : `v${getNextTag(latestTag)}`;
   const currentTagURL = `https://github.com/${process.env.GITHUB_OWNER}/${repoName}/releases/tag/${newTag}`;
   const prevTagURL = `https://github.com/${process.env.GITHUB_OWNER}/${repoName}/releases/tag/${latestTag}`;
   const prevTagHyperlink =
@@ -583,7 +603,7 @@ const addAnalytics = async (req, res) => {
       formattedDate,
       `=HYPERLINK("${hostingURL}", "Link")`,
       hostingRequester,
-      "Approved",
+      revert ? "Reverted" : "Approved",
     ],
   ];
   await appendIntoSheet(rows, SPREADSHEET_ID, SPREADSHEET_HOSTING_RANGE);
@@ -600,13 +620,106 @@ const latestTag = async (repo, owner, access_token) => {
   });
   const tags = response.data.map((tag) => tag.name);
   const latestTag = tags[0] || "";
-  return latestTag;
+  const prevTag = tags[1] || "";
+  return [latestTag, prevTag];
 };
 
 const getLatestTag = async (req, res) => {
   const { access_token, repoName } = req.query;
   const tag = await latestTag(repoName, process.env.GITHUB_OWNER, access_token);
-  return res.status(StatusCodes.OK).json({ latestTag: tag, repoName });
+  return res
+    .status(StatusCodes.OK)
+    .json({ latestTag: tag[0], prevTag: tag[1], repoName });
+};
+
+const getDeployedLabList = async (req, res) => {
+  let { readData: data, rawData } = await getDataFromSheet(
+    SPREADSHEET_ID,
+    SPREADSHEET_HOSTING_RANGE,
+    "RAW"
+  );
+
+  let rows = data.data.sheets[0].data[0].rowData;
+
+  let newRows = [];
+
+  for (let j = 0; j < rows.length; j++) {
+    let values = rows[j].values;
+    if (!values) continue;
+    let r = [];
+    for (let i = 0; i < values.length; i++)
+      r.push({ ...getLinkAndName(values[i]), raw: rawData[j][i] });
+    newRows.push(r);
+  }
+
+  const columns = newRows[0]
+    .map((_, i) => ({ key: i, name: newRows[0][i].raw }))
+    .filter((col) => col.name !== "");
+
+  newRows = newRows.slice(2);
+
+  let deployedLabs = [];
+  let index = 0;
+  for (let row of newRows) {
+    let lab = { id: index };
+    index++;
+    for (let col of columns) {
+      if (row[col.key])
+        lab[col.name] = {
+          text: row[col.key].raw,
+          link: row[col.key].link || undefined,
+        };
+      else lab[col.name] = { text: "" };
+    }
+    deployedLabs.push(lab);
+  }
+
+  return res.status(StatusCodes.OK).json({ deployedLabs });
+};
+
+const revertTag = async (req, res) => {
+  try {
+    const { access_token, repoName, tagName } = req.body;
+    const octokit = new Octokit({
+      auth: access_token,
+    });
+    const repoOwner = process.env.GITHUB_OWNER;
+    const tagToRevert = tagName;
+    const branch = await getDefaultGithubBranch(
+      repoName,
+      repoOwner,
+      access_token
+    );
+
+    const { data: tagInfo } = await octokit.repos.listTags({
+      owner: repoOwner,
+      repo: repoName,
+    });
+
+    const tag = tagInfo.find((t) => t.name === tagToRevert);
+
+    if (!tag) {
+      throw new Error(`Tag '${tagToRevert}' not found.`);
+    }
+
+    const commitSHA = tag.commit.sha;
+
+    await octokit.git.updateRef({
+      owner: repoOwner,
+      repo: repoName,
+      ref: "heads/" + branch,
+      sha: commitSHA,
+      force: true,
+    });
+
+    console.log(
+      `Repository reverted to commit ${commitSHA} associated with tag ${tagToRevert}.`
+    );
+    res.status(StatusCodes.OK).json({ message: "success" });
+  } catch (error) {
+    console.error("Error reverting repository:", error);
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 module.exports = {
@@ -619,4 +732,6 @@ module.exports = {
   addAnalytics,
   getLatestTag,
   createTag,
+  getDeployedLabList,
+  revertTag,
 };

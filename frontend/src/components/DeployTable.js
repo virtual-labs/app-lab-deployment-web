@@ -12,13 +12,18 @@ const DeployTable = ({ data }) => {
 
   let isDeploying = false;
 
+  const waitingList = [
+    "started",
+    "queued",
+    "in_progress",
+    "waiting",
+    "adding_tag",
+    "adding_analytics",
+    "reverting",
+  ];
+
   deployLabList.forEach((lab) => {
-    isDeploying =
-      isDeploying ||
-      lab.status === "started" ||
-      lab.status === "queued" ||
-      lab.status === "in_progress" ||
-      lab.status === "waiting";
+    isDeploying = isDeploying || waitingList.includes(lab.status);
   });
 
   const remove = (repoName) => {
@@ -40,6 +45,7 @@ const DeployTable = ({ data }) => {
       "waiting",
       "adding_tag",
       "adding_analytics",
+      "reverting",
     ];
 
     if (waiting.includes(str))
@@ -94,6 +100,29 @@ const DeployTable = ({ data }) => {
     return `${major}.${minor}.${parseInt(patch) + 1}`;
   };
 
+  const handleRevert = (checked, item) => {
+    if (isDeploying) return;
+    if (checked) {
+      setDeployLabList(
+        deployLabList.map((lab) => {
+          if (lab.repoName === item.repoName) {
+            lab.revert = true;
+          }
+          return lab;
+        })
+      );
+    } else {
+      setDeployLabList(
+        deployLabList.map((lab) => {
+          if (lab.repoName === item.repoName) {
+            lab.revert = false;
+          }
+          return lab;
+        })
+      );
+    }
+  };
+
   return (
     <div className="w-full h-full overflow-auto">
       <table className="w-full border-collapse border border-gray-300">
@@ -115,8 +144,9 @@ const DeployTable = ({ data }) => {
             <th className="py-2 px-4 border-r">Lab Link</th>
             <th className="py-2 px-4 border-r">Repo</th>
             <th className="py-2 px-4 border-r">Descriptor URL</th>
-            <th className="py-2 px-4 border-r">Latest tag</th>
+            <th className="py-2 px-4 border-r">Existing tag</th>
             <th className="py-2 px-4 border-r">New tag</th>
+            <th className="py-2 px-4 border-r">Revert to Previous</th>
             <th className="py-2 px-4 border-r">Hosting URL</th>
             <th className="py-2 px-4 border-r">Requester</th>
             <th className="py-2 px-4 border-r">Status</th>
@@ -175,6 +205,19 @@ const DeployTable = ({ data }) => {
                 </td>
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
                   {"v" + newTag}
+                </td>
+                <td className="py-2 px-4 border-r h-16 items-center justify-center">
+                  {item.prevTag ? (
+                    <>
+                      <input
+                        type="checkbox"
+                        className="form-checkbox"
+                        checked={item.revert}
+                        onChange={(e) => handleRevert(e.target.checked, item)}
+                      />
+                      <span className="ml-1">{item.prevTag}</span>
+                    </>
+                  ) : null}
                 </td>
                 <td className="py-2 px-4 border-r">
                   <a

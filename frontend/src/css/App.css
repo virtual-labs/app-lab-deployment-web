@@ -2751,6 +2751,10 @@ textarea.w-select {
   background-color: white;
 }
 
+.insert-doc-button.active {
+  background-color: rgb(201, 199, 199);
+}
+
 .insert-doc-button:hover {
   background-color: #e4e4e4;
 }
