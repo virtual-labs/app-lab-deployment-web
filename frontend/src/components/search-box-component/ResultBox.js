@@ -13,7 +13,7 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
     try {
       if (loading) return;
       setLoading(true);
-      const response = await axios.get(
+      let response = await axios.get(
         SEARCH_API +
           "/get_latest_tag?access_token=" +
           localStorage.getItem("accessToken") +
@@ -21,6 +21,14 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
           lab.repoName
       );
       const { latestTag, prevTag } = response.data;
+      response = await axios.get(
+        SEARCH_API +
+          "/get_deployed_labs?access_token=" +
+          localStorage.getItem("accessToken") +
+          "&repoName=" +
+          lab.repoName
+      );
+      const { len } = response.data;
       let hostingURL = prompt("Enter hosting request URL:");
       if (!hostingURL) {
         alert("Please enter a valid URL");
@@ -34,6 +42,15 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
         return;
       }
 
+      let hostingRequestDate = prompt(
+        "Enter hosting request date (mm/dd/yyyy):"
+      );
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(hostingRequestDate)) {
+        alert("Please enter a valid hosting requester (mm/dd/yyyy)");
+        setLoading(false);
+        return;
+      }
+
       let newLab = {
         ...lab,
         latestTag,
@@ -42,6 +59,8 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
         hostingRequester,
         status: "-",
         conclusion: null,
+        hostingRequestDate,
+        experimentCount: len,
       };
       setDeployLabList([...deployLabList, newLab]);
     } catch (err) {

@@ -13,6 +13,7 @@ const NavBar = ({
   userInfo,
   viewAnalytics,
   setViewAnalytics,
+  viewExpInfo,
 }) => {
   const { deployLabList, setDeployLabList } = useDeployLabList();
   const [deployLoading, setDeployLoading] = React.useState(false);
@@ -67,7 +68,7 @@ const NavBar = ({
       try {
         let newTag = "v" + getNextTag(item.latestTag);
         let resp;
-        if (item.revert === false) {
+        if (!item.revert) {
           updateDeployList(item.repoName, { status: "adding_tag" });
           let resp = await axios.post(SEARCH_API + "/create_tag", {
             repo: item.repoName,
@@ -77,20 +78,23 @@ const NavBar = ({
           if (resp.status !== 200) {
             throw new Error("Error creating tag");
           }
-        }
-
-        updateDeployList(item.repoName, { status: "adding_analytics" });
-        resp = await axios.post(SEARCH_API + "/add_analytics", item);
-        if (resp.status !== 200) {
-          throw new Error("Error adding analytics");
-        }
-        if (item.revert === true)
-          updateDeployList(item.repoName, { status: "done" });
-        else
+          updateDeployList(item.repoName, { status: "adding_analytics" });
+          resp = await axios.post(SEARCH_API + "/add_analytics", item);
+          if (resp.status !== 200) {
+            throw new Error("Error adding analytics");
+          }
           updateDeployList(item.repoName, {
             status: "done",
             latestTag: newTag,
           });
+        } else {
+          updateDeployList(item.repoName, { status: "adding_analytics" });
+          resp = await axios.post(SEARCH_API + "/add_analytics", item);
+          if (resp.status !== 200) {
+            throw new Error("Error adding analytics");
+          }
+          updateDeployList(item.repoName, { status: "done" });
+        }
       } catch (err) {
         console.log(err);
         setDeployLabList((prev) =>
@@ -131,7 +135,7 @@ const NavBar = ({
       const responses = await Promise.all(
         deployLabList.map(async (lab) => {
           try {
-            if (lab.revert === true) {
+            if (lab.revert) {
               updateDeployList(lab.repoName, { status: "reverting" });
               await axios.post(SEARCH_API + "/revert_tag", {
                 access_token: localStorage.getItem("accessToken"),
@@ -139,10 +143,10 @@ const NavBar = ({
                 tagName: lab.prevTag,
               });
               const data = await deployLab(lab);
-              return { ...data, ...lab, status: "started", conclusion: null };
+              return { ...lab, ...data, status: "started", conclusion: null };
             } else {
               const data = await deployLab(lab);
-              return { ...data, ...lab, status: "started", conclusion: null };
+              return { ...lab, ...data, status: "started", conclusion: null };
             }
           } catch (error) {
             return {
@@ -156,7 +160,7 @@ const NavBar = ({
       setDeployLabList(responses);
       responses.forEach((lab) => {
         if (lab.status === "started") {
-          getStatus(lab);
+          setTimeout(() => getStatus(lab), 1000);
         }
       });
       console.log("Data from all requests:", responses);
@@ -186,7 +190,7 @@ const NavBar = ({
             Lab Deployment
           </div>
           <div style={{ float: "right", marginLeft: "auto" }}>
-            {!isDeploying && (
+            {!isDeploying && !viewAnalytics && !viewExpInfo && (
               <span
                 className="text-lg text-gray-100 hover:text-gray-200 hover:underline cursor-pointer mr-1"
                 onClick={() => setShowDeployTab(!showDeployTab)}
@@ -194,7 +198,7 @@ const NavBar = ({
                 {getDeployButtonText()}
               </span>
             )}
-            {showDeployTab && (
+            {showDeployTab && !viewAnalytics && !viewExpInfo && (
               <button className="insert-doc-button mr-2" onClick={deployLabs}>
                 {isDeploying ? "Deploying " : "Deploy "}Lab
                 {deployLabList.length > 1 ? "s" : ""}{" "}
@@ -208,17 +212,19 @@ const NavBar = ({
               Add Lab
             </button>
 
-            <button
-              className={`${
-                viewAnalytics ? "active" : ""
-              } insert-doc-button mr-2`}
-              onClick={() => {
-                if (isDeploying) return;
-                setViewAnalytics(!viewAnalytics);
-              }}
-            >
-              Analytics
-            </button>
+            {!viewExpInfo && (
+              <button
+                className={`${
+                  viewAnalytics ? "active" : ""
+                } insert-doc-button mr-2`}
+                onClick={() => {
+                  if (isDeploying) return;
+                  setViewAnalytics(!viewAnalytics);
+                }}
+              >
+                Hosting Info
+              </button>
+            )}
             <button
               className="logout-button"
               onClick={() => {

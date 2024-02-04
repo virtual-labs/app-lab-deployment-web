@@ -20,6 +20,7 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/dashboard" element={<Protected />} />
+        <Route path="/dashboard/:labname" element={<Protected />} />
         <Route path="/" element={<Default />} />
         <Route path="/callback" element={<Callback />} />
       </Routes>

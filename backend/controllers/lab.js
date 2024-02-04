@@ -177,21 +177,14 @@ const getLabs = async (req, res) => {
     .json({ labs: filteredLabs, len: filteredLabs.length });
 };
 
-const getLabDescriptor = async (req, res) => {
-  const { reponame, access_token, want_descriptor_url } = req.query;
-
-  if (!reponame) {
-    throw new BadRequestError(`repository name missing`);
-  }
-
-  if (!access_token) {
-    throw new BadRequestError(`github access_token missing`);
-  }
-
+const getDescriptor = async (
+  access_token,
+  reponame,
+  want_descriptor_url = false
+) => {
   const octokit = new Octokit({
     auth: access_token,
   });
-
   const owner = process.env.GITHUB_OWNER;
   const repo = reponame;
   const branch = await getDefaultGithubBranch(repo, owner, access_token);
@@ -215,6 +208,24 @@ const getLabDescriptor = async (req, res) => {
   if (want_descriptor_url) {
     descriptorJson.descriptorURL = resp.data.html_url;
   }
+  return descriptorJson;
+};
+
+const getLabDescriptor = async (req, res) => {
+  const { reponame, access_token, want_descriptor_url } = req.query;
+
+  if (!reponame) {
+    throw new BadRequestError(`repository name missing`);
+  }
+
+  if (!access_token) {
+    throw new BadRequestError(`github access_token missing`);
+  }
+  const descriptorJson = await getDescriptor(
+    access_token,
+    reponame,
+    want_descriptor_url
+  );
   return res.status(StatusCodes.OK).json(descriptorJson);
 };
 
@@ -455,7 +466,7 @@ const deployLab = async (req, res) => {
       return res
         .status(StatusCodes.OK)
         .json({ message: "success", workflowRunId });
-    }, 5000);
+    }, 2000);
   } catch (error) {
     console.error("Error triggering workflow:", error.message);
     return res.status(400).json({ message: error.message });
@@ -575,6 +586,8 @@ const addAnalytics = async (req, res) => {
     hostingRequester,
     revert,
     prevTag,
+    hostingRequestDate,
+    experimentCount,
   } = req.body;
 
   const newTag = revert ? prevTag : `v${getNextTag(latestTag)}`;
@@ -596,10 +609,10 @@ const addAnalytics = async (req, res) => {
       university,
       `=HYPERLINK("${repoLink}", "${labName}")`,
       `=HYPERLINK("${labLink}", "Hosted")`,
-      `GitHub VL`,
+      experimentCount,
       currentTagHyperlink,
       prevTagHyperlink,
-      formattedDate,
+      hostingRequestDate,
       formattedDate,
       `=HYPERLINK("${hostingURL}", "Link")`,
       hostingRequester,
@@ -722,6 +735,46 @@ const revertTag = async (req, res) => {
   }
 };
 
+const getDeployedLabs = async (req, res) => {
+  const { access_token, repoName } = req.query;
+
+  if (!repoName) {
+    throw new BadRequestError(`repository name missing`);
+  }
+  if (!access_token) {
+    throw new BadRequestError(`github access_token missing`);
+  }
+
+  const descriptor = await getDescriptor(access_token, repoName, false);
+  let experimentList = [];
+  const sections = descriptor["experiment-sections"];
+  if (sections) {
+    for (let section of sections) {
+      const sectionName = section["sect-name"];
+      const experiments = section.experiments;
+      if (experiments) {
+        for (let experiment of experiments) {
+          if (experiment.deploy)
+            experimentList.push({
+              ...experiment,
+              "Section Name": sectionName,
+            });
+        }
+      }
+    }
+  } else if (descriptor.experiments) {
+    const experiments = descriptor.experiments;
+    for (let experiment of experiments) {
+      if (experiment.deploy) experimentList.push(experiment);
+    }
+  }
+  return res.status(StatusCodes.OK).json({
+    experimentList,
+    len: experimentList.length,
+    labName: descriptor.lab_display_name || descriptor.lab || "",
+  });
+};
+
 module.exports = {
   getLabs,
   getLabDescriptor,
@@ -734,4 +787,5 @@ module.exports = {
   createTag,
   getDeployedLabList,
   revertTag,
+  getDeployedLabs,
 };

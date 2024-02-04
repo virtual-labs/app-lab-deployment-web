@@ -12,6 +12,8 @@ import DeployTable from "./components/DeployTable";
 import { useDeployLabList } from "./utils/useLabList";
 import { USER_API } from "./utils/config_data";
 import AnalyticsTable from "./components/AnalyticsTable";
+import { useParams } from "react-router-dom";
+import ExperimentTable from "./components/ExperimentTable";
 
 function Main() {
   const [present, setPresent] = useState(DEFAULT_SECTION);
@@ -21,6 +23,10 @@ function Main() {
   const [userInfo, setUserInfo] = useState({});
   const [showDeployTab, setShowDeployTab] = useState(false);
   const [viewAnalytics, setViewAnalytics] = useState(false);
+
+  const { labname } = useParams();
+
+  const viewExpInfo = labname !== undefined;
 
   useEffect(() => {
     const url =
@@ -94,9 +100,11 @@ function Main() {
                 userInfo={userInfo}
                 setViewAnalytics={setViewAnalytics}
                 viewAnalytics={viewAnalytics}
+                viewExpInfo={viewExpInfo}
               />
             </div>
-            {!viewAnalytics &&
+            {!viewExpInfo &&
+              !viewAnalytics &&
               (showDeployTab ? (
                 <DeployLabComponent />
               ) : (
@@ -110,7 +118,8 @@ function Main() {
                   }}
                 />
               ))}
-            {viewAnalytics && <AnalyticsComponent />}
+            {!viewExpInfo && viewAnalytics && <AnalyticsComponent />}
+            {viewExpInfo && <ExperimentTable labName={labname} />}
           </div>
         </DescriptorTemplateProvider>
       </LabListProvider>
@@ -155,7 +164,7 @@ const LabComponent = ({
 const AnalyticsComponent = () => {
   return (
     <div className="flex flex-1 flex-row flex-block overflow-hidden">
-      <div className="flex flex-col w-full overflow-hidden">
+      <div className="atable-parent flex flex-col w-full overflow-hidden">
         <AnalyticsTable />
       </div>
     </div>

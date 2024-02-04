@@ -144,11 +144,13 @@ const DeployTable = ({ data }) => {
             <th className="py-2 px-4 border-r">Lab Link</th>
             <th className="py-2 px-4 border-r">Repo</th>
             <th className="py-2 px-4 border-r">Descriptor URL</th>
+            <th className="py-2 px-4 border-r">Exp. count</th>
             <th className="py-2 px-4 border-r">Existing tag</th>
             <th className="py-2 px-4 border-r">New tag</th>
             <th className="py-2 px-4 border-r">Revert to Previous</th>
             <th className="py-2 px-4 border-r">Hosting URL</th>
             <th className="py-2 px-4 border-r">Requester</th>
+            <th className="py-2 px-4 border-r">Hosting Request Date</th>
             <th className="py-2 px-4 border-r">Status</th>
             <th className="py-2 px-4 border-r">Conclusion</th>
           </tr>
@@ -199,7 +201,18 @@ const DeployTable = ({ data }) => {
                     {"Link"}
                   </a>
                 </td>
-
+                <td className="py-2 px-4 border-r h-16 items-center justify-center">
+                  {
+                    <a
+                      href={`/dashboard/${item.repoName}`}
+                      target="_blank"
+                      className="table-link"
+                      rel="noopener noreferrer"
+                    >
+                      {item.experimentCount}
+                    </a>
+                  }
+                </td>
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
                   {item.latestTag}
                 </td>
@@ -230,6 +243,9 @@ const DeployTable = ({ data }) => {
                   </a>
                 </td>
                 <td className="py-2 px-4 border-r">{item.hostingRequester}</td>
+                <td className="py-2 px-4 border-r h-16 items-center justify-center">
+                  {item.hostingRequestDate}
+                </td>
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
                   {format(item.status)}
                 </td>

@@ -13,6 +13,7 @@ const {
   createTag,
   getDeployedLabList,
   revertTag,
+  getDeployedLabs,
 } = require("../controllers/lab");
 
 router.route("/").get(getLabs);
@@ -26,5 +27,6 @@ router.route("/create_tag").post(createTag);
 router.route("/get_latest_tag").get(getLatestTag);
 router.route("/get_deployed_lab_list").get(getDeployedLabList);
 router.route("/revert_tag").post(revertTag);
+router.route("/get_deployed_labs").get(getDeployedLabs);
 
 module.exports = router;
