@@ -141,6 +141,7 @@ const DeployTable = ({ data }) => {
             <th className="py-2 px-4 border-r">University</th>
             <th className="py-2 px-4 border-r">Lab Name</th>
             <th className="py-2 px-4 border-r">Discipline</th>
+            <th className="py-2 px-4 border-r">Phase</th>
             <th className="py-2 px-4 border-r">Lab Link</th>
             <th className="py-2 px-4 border-r">Repo</th>
             <th className="py-2 px-4 border-r">Descriptor URL</th>
@@ -171,6 +172,7 @@ const DeployTable = ({ data }) => {
                 <td className="py-2 px-4 border-r">{item.university}</td>
                 <td className="py-2 px-4 border-r">{item.labName}</td>
                 <td className="py-2 px-4 border-r">{item.discipline}</td>
+                <td className="py-2 px-4 border-r">{item.phase}</td>
                 <td className="py-2 px-4 border-r">
                   <a
                     href={`${item.labLink}`}

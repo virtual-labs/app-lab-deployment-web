@@ -5,13 +5,11 @@ const {
   SPREADSHEET_ID,
   SPREADSHEET_RANGE,
   SPREADSHEET_NAME,
-  SPREADSHEET_HOSTING_NAME,
   SPREADSHEET_HOSTING_RANGE,
 } = require("../secrets/spreadsheet");
 const { Octokit } = require("@octokit/rest");
 const { Base64 } = require("js-base64");
 const axios = require("axios");
-const { raw } = require("express");
 
 const getDataFromSheet = async (spreadsheetId, range, req = null) => {
   try {
@@ -588,6 +586,7 @@ const addAnalytics = async (req, res) => {
     prevTag,
     hostingRequestDate,
     experimentCount,
+    phase,
   } = req.body;
 
   const newTag = revert ? prevTag : `v${getNextTag(latestTag)}`;
@@ -617,6 +616,7 @@ const addAnalytics = async (req, res) => {
       `=HYPERLINK("${hostingURL}", "Link")`,
       hostingRequester,
       revert ? "Reverted" : "Approved",
+      phase,
     ],
   ];
   await appendIntoSheet(rows, SPREADSHEET_ID, SPREADSHEET_HOSTING_RANGE);
@@ -772,6 +772,7 @@ const getDeployedLabs = async (req, res) => {
     experimentList,
     len: experimentList.length,
     labName: descriptor.lab_display_name || descriptor.lab || "",
+    phase: descriptor.phase || "",
   });
 };
 

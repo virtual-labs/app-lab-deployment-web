@@ -8,7 +8,11 @@ import Callback from "./Callback";
 const Default = () => {
   return (
     <div>
-      <button onClick={() => (window.location.href = "/dashboard")}>
+      <h1 className="text-4xl font-bold text-center m-4">Workflow App</h1>
+      <button
+        className="submit-button w-button w-32 m-4"
+        onClick={() => (window.location.href = "/dashboard")}
+      >
         Login
       </button>
     </div>

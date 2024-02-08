@@ -1,12 +1,14 @@
 import React from "react";
 import Main from "./Main";
 
+import { LOGIN_API } from "./utils/config_data";
+
 const Protected = () => {
   if (
     localStorage.getItem("accessToken") === null ||
     localStorage.getItem("accessToken") === "undefined"
   ) {
-    window.location.href = "http://localhost:5005/auth/github";
+    window.location.href = LOGIN_API;
     return <div>Redirecting to GitHub Login...</div>;
   }
 

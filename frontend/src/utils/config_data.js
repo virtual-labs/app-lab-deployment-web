@@ -21,156 +21,12 @@ const DEFAULT_QUERY = {
   page_title_filter: "",
 };
 
-const SEARCH_API = "http://localhost:5005/api/lab";
-const AUTH_API = "http://localhost:5005/auth/github/access_token";
-const USER_API = "http://localhost:5005/api/user";
+const BASE_URL = "http://localhost:5005";
 
-const descriptorSchema = {
-  $schema: "http://json-schema.org/schema#",
-  $id: "https://schema.vlabs.ac.in/lab-descriptor.schema.json",
-  title: "Lab Descriptor",
-  description:
-    "Schema for a Lab Descriptor defining the properties of a Virtual Lab",
-  type: "object",
-  required: [
-    "lab",
-    "broadArea",
-    "phase",
-    "collegeName",
-    "baseUrl",
-    "introduction",
-    "objective",
-    "targetAudience",
-    "courseAlignment",
-  ],
-  properties: {
-    lab: { type: "string" },
-    lab_display_name: {
-      type: "string",
-      default: "Default Lab Display Name",
-    },
-    broadArea: {
-      type: "object",
-      properties: {
-        name: { type: "string" },
-        link: { type: "string", format: "uri" },
-        code: {
-          enum: [
-            "BIO",
-            "CHEMENG",
-            "CHEMSCI",
-            "CIVIL",
-            "CSE",
-            "DESIGN",
-            "ECE",
-            "EE",
-            "MECH",
-            "PHYSCI",
-          ],
-        },
-      },
-      required: ["code"],
-    },
-    phase: { enum: [2, 3, "3-ext"] },
-    collegeName: {
-      enum: [
-        "AMRT",
-        "COEP",
-        "DLBG",
-        "IIITH",
-        "IITB",
-        "IITD",
-        "IITG",
-        "IITK",
-        "IITKGP",
-        "IITR",
-        "NITK",
-      ],
-    },
-    baseUrl: {
-      type: "string",
-      format: "hostname",
-    },
-    introduction: { type: "string" },
-    objective: { type: "string" },
-    experiments: {
-      type: "array",
-      minItems: 1,
-      items: {
-        type: "object",
-        required: ["name", "short-name", "repo", "tag", "deploy"],
-        properties: {
-          name: { type: "string" },
-          "short-name": { type: "string" },
-          repo: { type: "string", format: "uri" },
-          tag: {
-            type: "string",
-            minLength: 6,
-            maxLength: 6,
-            pattern: "^v([0-9]{1,2}\\.){2}[0-9]$",
-          },
-          deploy: { type: "boolean" },
-        },
-        additionalProperties: false,
-      },
-    },
-    "experiment-sections": {
-      type: "array",
-      items: {
-        type: "object",
-        required: ["sect-name", "experiments"],
-        properties: {
-          "sect-name": { type: "string" },
-          experiments: {
-            type: "array",
-            minItems: 1,
-            items: {
-              type: "object",
-              required: ["name", "short-name", "repo", "tag", "deploy"],
-              properties: {
-                name: { type: "string" },
-                "short-name": { type: "string" },
-                repo: { type: "string", format: "uri" },
-                tag: {
-                  type: "string",
-                  minLength: 6,
-                  maxLength: 6,
-                  pattern: "^v([0-9]{1,2}\\.){2}[0-9]$",
-                },
-                deploy: { type: "boolean" },
-              },
-              additionalProperties: false,
-            },
-          },
-        },
-      },
-    },
-    targetAudience: {
-      type: "object",
-      properties: {
-        UG: {
-          type: "array",
-          items: { type: "string" },
-        },
-        PG: {
-          type: "array",
-          items: { type: "string" },
-        },
-      },
-    },
-    courseAlignment: {
-      type: "object",
-      properties: {
-        description: { type: "string" },
-        universities: {
-          type: "array",
-          minItems: 1,
-          items: { type: "string" },
-        },
-      },
-    },
-  },
-};
+const SEARCH_API = BASE_URL + "/api/lab";
+const AUTH_API = BASE_URL + "/auth/github/access_token";
+const USER_API = BASE_URL + "/api/user";
+const LOGIN_API = BASE_URL + "/auth/github";
 
 function useDescriptorSource() {
   const [descriptor, setDescriptor] = useState({});
@@ -207,9 +63,9 @@ export {
   DEFAULT_SECTION,
   DEFAULT_QUERY,
   SEARCH_API,
-  descriptorSchema,
   DescriptorTemplateProvider,
   useDescriptor,
   AUTH_API,
   USER_API,
+  LOGIN_API,
 };
