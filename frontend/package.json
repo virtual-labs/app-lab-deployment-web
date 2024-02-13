@@ -12,19 +12,18 @@
     "axios": "^1.6.2",
     "jsoneditor": "^9.0.0",
     "jsoneditor-react": "^3.1.2",
-    "react": "^17.0.0",
+    "react": "^18.2.0",
     "react-data-table-component": "^7.6.2",
-    "react-dom": "^17.0.0",
+    "react-dom": "^18.2.0",
     "react-json-editor-ajrm": "^2.5.14",
     "react-loading": "^2.0.3",
-    "react-router-dom": "^6.21.1",
+    "react-router-dom": "^6.6.1",
     "react-scripts": "5.0.1",
-    "react-table": "^7.8.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build --no-minify",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
