@@ -34,6 +34,7 @@ The Virtual Labs Workflow tool is designed for hosting engineers responsible for
 
 - **Hosting Information:**
   - View deployed labs information, apply filters on columns and time.
+  - This tool also helps to maintain complete history of all deployments and helps user gather statistics about the deployments.
 
 ## DOCS
 

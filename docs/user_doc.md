@@ -63,9 +63,10 @@ Lab deployment involves committing descriptors, selecting workflows, and trigger
 
 ### Hosting Information
 
-- **Viewing Hosting Information:**
+- **Viewing Hosting Information/history:**
 
   - Click on "Hosting Info" in the Navbar to access deployed labs' information.
+  - This shows history of all deployments and helps user gather statistics about the deployments.
   - Apply filters on columns and time to refine the view.
 
     <img src="./img/hosting.png">

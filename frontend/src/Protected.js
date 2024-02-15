@@ -9,6 +9,8 @@ const Protected = () => {
     localStorage.getItem("accessToken") === "undefined"
   ) {
     window.location.href = LOGIN_API;
+    console.log("Redirecting to GitHub Login...", LOGIN_API);
+
     return <div>Redirecting to GitHub Login...</div>;
   }
 

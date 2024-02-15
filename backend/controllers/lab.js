@@ -156,6 +156,11 @@ const getLabList = async () => {
 
 const getLabs = async (req, res) => {
   let { search } = req.query;
+
+  if (!search) {
+    return res.status(StatusCodes.OK).json({ labs: [], len: 0 });
+  }
+
   console.log("search request for: ", search);
   search = search.toLowerCase().trim();
 

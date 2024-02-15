@@ -23,6 +23,8 @@ const DEFAULT_QUERY = {
 
 const BASE_URL = "http://localhost:5005";
 
+// const BASE_URL = "https://lab-deployment-414310.as.r.appspot.com/";
+
 const SEARCH_API = BASE_URL + "/api/lab";
 const AUTH_API = BASE_URL + "/auth/github/access_token";
 const USER_API = BASE_URL + "/api/user";
