@@ -1,13 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
-// import "./index.css";
 import App from "./App";
-// import Test from "./Table";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
+document.title = "Lab Deployment";
+
 root.render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>
+  <>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </>
 );

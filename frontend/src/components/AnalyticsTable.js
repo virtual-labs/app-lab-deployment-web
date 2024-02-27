@@ -11,9 +11,9 @@ const notToBeSorted = [
   "Status 2",
   "Linked on vlab.co.in",
   "Location of Exp Repos",
-  "Requester",
   "Status",
   "No.of Experiment",
+  "Phase",
 ];
 
 const customStyles = {
@@ -48,6 +48,35 @@ const customStyles = {
   },
 };
 
+const getSortFunction = (key) => {
+  if (key === "Hosting Date" || key === "Hosting request date") {
+    return (a, b) => {
+      a = a[key].props.children || "";
+      b = b[key].props.children || "";
+      if (a.includes("/")) {
+        let tem_a = a.split("/");
+        a = new Date(`${tem_a[1]}/${tem_a[0]}/${tem_a[2]}`);
+      }
+      if (b.includes("/")) {
+        let tem_b = b.split("/");
+        b = new Date(`${tem_b[1]}/${tem_b[0]}/${tem_b[2]}`);
+      }
+      return new Date(a).getTime() - new Date(b).getTime();
+    };
+  }
+
+  return (a, b) => {
+    if (a[key].props?.children === undefined) {
+      return a[key] - b[key];
+    }
+    a = a[key].props?.children || a;
+    b = b[key].props?.children || b;
+    if (typeof a === "string") {
+      return a.localeCompare(b) || a - b;
+    }
+  };
+};
+
 function AnalyticsTable() {
   const [pending, setPending] = React.useState(true);
   const [originalRows, setOriginalRows] = React.useState([]);
@@ -61,7 +90,6 @@ function AnalyticsTable() {
       try {
         const response = await axios.get(SEARCH_API + "/get_deployed_lab_list");
         let { deployedLabs } = response.data;
-        // console.log(deployedLabs);
         deployedLabs = deployedLabs.map((lab, index) => {
           const num = lab["No.of Experiment"];
           const lab_url = lab["Lab Name"].link;
@@ -81,13 +109,25 @@ function AnalyticsTable() {
 
         for (let key in deployedLabs[0]) {
           if (key === "S.No.") continue;
-          newColumns.push({
+
+          let tem_col = {};
+
+          tem_col = {
             name: key,
             selector: (row) => row[key],
-            sortable: notToBeSorted.indexOf(key) === -1 ? true : false,
+            sortable: !notToBeSorted.includes(key),
             wrap: true,
-          });
+            sortFunction: !notToBeSorted.includes(key)
+              ? getSortFunction(key)
+              : undefined,
+          };
+
+          if (key.length > 10) tem_col.width = `${250}px`;
+          else if (key.length > 5) tem_col.width = `${150}px`;
+          else tem_col.width = `${100}px`;
+          newColumns.push(tem_col);
         }
+        console.log(newColumns);
         setColumns(newColumns);
         setRows(deployedLabs.reverse());
         setOriginalRows(deployedLabs);

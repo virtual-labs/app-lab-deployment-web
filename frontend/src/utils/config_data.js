@@ -21,7 +21,14 @@ const DEFAULT_QUERY = {
   page_title_filter: "",
 };
 
-const BASE_URL = "http://localhost:5005";
+let BASE_URL = "http://localhost:5005";
+
+console.log("NODE_ENV:", process.env.REACT_APP_FRONTEND_ENV);
+
+if (process.env.REACT_APP_FRONTEND_ENV === "production") {
+  console.log("Production mode");
+  BASE_URL = "https://lab-deployment-414310.as.r.appspot.com/";
+}
 
 // const BASE_URL = "https://lab-deployment-414310.as.r.appspot.com/";
 
@@ -61,6 +68,43 @@ function DescriptorTemplateProvider({ children }) {
   );
 }
 
+function validateDate(dateString) {
+  const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+
+  if (!dateRegex.test(dateString)) {
+    return "Invalid date format. Please use mm/dd/yyyy.";
+  }
+
+  const parts = dateString.split("/");
+  const month = parseInt(parts[0], 10);
+  const day = parseInt(parts[1], 10);
+  const year = parseInt(parts[2], 10);
+
+  const isValidDate =
+    !isNaN(year) &&
+    !isNaN(month) &&
+    !isNaN(day) &&
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= 31;
+
+  if (!isValidDate) {
+    return "Invalid date. Please enter a valid hosting request date.";
+  }
+
+  return null;
+}
+
+function validateURL(url) {
+  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
+  if (!urlRegex.test(url)) {
+    return "Invalid URL. Please enter a valid URL.";
+  }
+  return null;
+}
+
 export {
   DEFAULT_SECTION,
   DEFAULT_QUERY,
@@ -70,4 +114,6 @@ export {
   AUTH_API,
   USER_API,
   LOGIN_API,
+  validateDate,
+  validateURL,
 };

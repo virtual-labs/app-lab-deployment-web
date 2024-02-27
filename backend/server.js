@@ -21,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("<h1>Lab deployment API</h1>");
+  res.send("<h1>Lab deployment API v1.0.0..</h1>");
 });
 
 const getGitHubAccessToken = async (code, client_id, client_secret) => {
@@ -83,7 +83,7 @@ app.post("/auth/github/access_token", (req, res) => {
     } catch (error) {
       console.error("Error:", error.message);
       // console.log(error);
-      return res.status(400).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   })();
 });

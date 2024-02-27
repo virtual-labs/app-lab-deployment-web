@@ -424,14 +424,15 @@ async function getLatestWorkflowRunId(repoOwner, repoName, workflowId, token) {
 }
 
 const deployLab = async (req, res) => {
-  const { access_token, repoName } = req.body;
+  const { access_token, repoName, workflowName } = req.body;
+  console.log("Deploying lab:", repoName, workflowName);
+
   const repoOwner = process.env.GITHUB_OWNER;
   const branch = await getDefaultGithubBranch(
     repoName,
     repoOwner,
     access_token
   );
-  const workflowName = process.env.GITHUB_DEPLOYMENT_WORKFLOW;
 
   const token = access_token;
 
@@ -781,6 +782,20 @@ const getDeployedLabs = async (req, res) => {
   });
 };
 
+const getWorkflowList = async (req, res) => {
+  const { access_token, repoName } = req.query;
+  const octokit = new Octokit({
+    auth: access_token,
+  });
+  const owner = process.env.GITHUB_OWNER;
+  const response = await octokit.actions.listRepoWorkflows({
+    owner,
+    repo: repoName,
+  });
+  const workflows = response.data.workflows.map((workflow) => workflow.name);
+  return res.status(StatusCodes.OK).json({ workflows });
+};
+
 module.exports = {
   getLabs,
   getLabDescriptor,
@@ -794,4 +809,5 @@ module.exports = {
   getDeployedLabList,
   revertTag,
   getDeployedLabs,
+  getWorkflowList,
 };

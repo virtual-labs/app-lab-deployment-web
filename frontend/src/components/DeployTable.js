@@ -80,7 +80,7 @@ const DeployTable = ({ data }) => {
       );
     }
 
-    if (str === "failed") {
+    if (str.includes("fail")) {
       return (
         <span className="flex flex-row items-center justify-center">
           <img src={Failed} alt="tick" className="w-6 h-6" />
@@ -123,6 +123,18 @@ const DeployTable = ({ data }) => {
     }
   };
 
+  const changeWorkflow = (workflow, item) => {
+    if (isDeploying) return;
+    setDeployLabList(
+      deployLabList.map((lab) => {
+        if (lab.repoName === item.repoName) {
+          lab.selectedWorkflow = workflow;
+        }
+        return lab;
+      })
+    );
+  };
+  console.log(deployLabList);
   return (
     <div className="w-full h-full overflow-auto">
       <table className="w-full border-collapse border border-gray-300">
@@ -152,6 +164,7 @@ const DeployTable = ({ data }) => {
             <th className="py-2 px-4 border-r">Hosting URL</th>
             <th className="py-2 px-4 border-r">Requester</th>
             <th className="py-2 px-4 border-r">Hosting Request Date</th>
+            <th className="py-2 px-4 border-r">Workflow</th>
             <th className="py-2 px-4 border-r">Status</th>
             <th className="py-2 px-4 border-r">Conclusion</th>
           </tr>
@@ -228,6 +241,7 @@ const DeployTable = ({ data }) => {
                         type="checkbox"
                         className="form-checkbox"
                         checked={item.revert}
+                        disabled={isDeploying}
                         onChange={(e) => handleRevert(e.target.checked, item)}
                       />
                       <span className="ml-1">{item.prevTag}</span>
@@ -247,6 +261,27 @@ const DeployTable = ({ data }) => {
                 <td className="py-2 px-4 border-r">{item.hostingRequester}</td>
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
                   {item.hostingRequestDate}
+                </td>
+                <td className="py-2 px-4 border-r">
+                  <select
+                    onChange={(e) => {
+                      changeWorkflow(e.target.value, item);
+                    }}
+                    className="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg  p-2.5"
+                    disabled={isDeploying}
+                  >
+                    {item.workflows.map((workflow, index) => {
+                      return (
+                        <option
+                          value={workflow}
+                          key={index}
+                          selected={item.selectedWorkflow === workflow}
+                        >
+                          {workflow}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </td>
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
                   {format(item.status)}

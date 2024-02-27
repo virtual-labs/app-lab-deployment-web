@@ -113,6 +113,7 @@ const NavBar = ({
     const response = await axios.post(SEARCH_API + "/deploy", {
       access_token: localStorage.getItem("accessToken"),
       repoName: lab.repoName,
+      workflowName: lab.selectedWorkflow,
     });
     let data = response.data;
     return data;
@@ -122,13 +123,12 @@ const NavBar = ({
     try {
       if (isDeploying) return;
 
-      console.log("deploying labs", deployLabList);
       // return;
-      console.log("deploying labs");
       setDeployLabList(
         deployLabList.map((lab) => ({
           ...lab,
           status: "waiting",
+          conclusion: null,
         }))
       );
       setDeployLoading(true);
@@ -228,8 +228,11 @@ const NavBar = ({
             <button
               className="logout-button"
               onClick={() => {
-                localStorage.removeItem("accessToken");
-                window.location.href = "/";
+                let conf = window.confirm("Are you sure you want to logout?");
+                if (conf) {
+                  localStorage.removeItem("accessToken");
+                  window.location.href = "/";
+                }
               }}
             >
               {`Logout (${getUser()})`}

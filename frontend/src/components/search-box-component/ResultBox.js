@@ -1,7 +1,7 @@
 import React from "react";
 import { useDeployLabList } from "../../utils/useLabList";
 import axios from "axios";
-import { SEARCH_API } from "../../utils/config_data";
+import { SEARCH_API, validateDate, validateURL } from "../../utils/config_data";
 import ReactLoading from "react-loading";
 
 const ResultBox = ({ result, setPresent, present, inList }) => {
@@ -29,8 +29,25 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
           lab.repoName
       );
       const { len, phase } = response.data;
+
+      let response2 = await axios.get(
+        SEARCH_API +
+          "/get_workflow_list?access_token=" +
+          localStorage.getItem("accessToken") +
+          "&repoName=" +
+          lab.repoName
+      );
+
+      const { workflows } = response2.data;
+
+      if (workflows.length === 0) {
+        alert("No workflows found for the lab with your credentials");
+        setLoading(false);
+        return;
+      }
+
       let hostingURL = prompt("Enter hosting request URL:");
-      if (!hostingURL) {
+      if (validateURL(hostingURL)) {
         alert("Please enter a valid URL");
         setLoading(false);
         return;
@@ -45,10 +62,15 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
       let hostingRequestDate = prompt(
         "Enter hosting request date (mm/dd/yyyy):"
       );
-      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(hostingRequestDate)) {
-        alert("Please enter a valid hosting requester (mm/dd/yyyy)");
+
+      const errorMessage = validateDate(hostingRequestDate);
+
+      if (errorMessage) {
+        alert(errorMessage);
         setLoading(false);
         return;
+      } else {
+        console.log("Date is valid!");
       }
 
       let newLab = {
@@ -62,10 +84,14 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
         hostingRequestDate,
         experimentCount: len,
         phase,
+        workflows,
+        selectedWorkflow: workflows[0],
       };
       setDeployLabList([...deployLabList, newLab]);
     } catch (err) {
-      alert("Error adding lab to deploy list: Not able to fetch latest tag");
+      alert(
+        "Error adding lab to deploy list: Not able to fetch latest tag or workflow list"
+      );
       console.log(err);
     } finally {
       setLoading(false);
