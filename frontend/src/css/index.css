@@ -35,3 +35,7 @@ div[role="row"]:hover {
 .jsoneditor-menu {
     background-color: #00a38a !important;
 }
+
+.host-req {
+    z-index: 2147483647 !important;
+}

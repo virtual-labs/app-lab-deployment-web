@@ -1,13 +1,15 @@
 import React from "react";
-import { useDeployLabList } from "../../utils/useLabList";
 import axios from "axios";
 import { SEARCH_API, validateDate, validateURL } from "../../utils/config_data";
 import ReactLoading from "react-loading";
+import HostingInfoForm from "../HostingInfoForm";
 
 const ResultBox = ({ result, setPresent, present, inList }) => {
-  const { deployLabList, setDeployLabList } = useDeployLabList();
-
   const [loading, setLoading] = React.useState(false);
+
+  const [modal, setModal] = React.useState(false);
+
+  const [temLab, setTemLab] = React.useState({});
 
   const addToList = async (lab) => {
     try {
@@ -46,48 +48,51 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
         return;
       }
 
-      let hostingURL = prompt("Enter hosting request URL:");
-      if (validateURL(hostingURL)) {
-        alert("Please enter a valid URL");
-        setLoading(false);
-        return;
-      }
-      let hostingRequester = prompt("Enter hosting requester:");
-      if (!hostingRequester) {
-        alert("Please enter a valid hosting requester");
-        setLoading(false);
-        return;
-      }
+      // let hostingURL = prompt("Enter hosting request URL:");
+      // if (validateURL(hostingURL)) {
+      //   alert("Please enter a valid URL");
+      //   setLoading(false);
+      //   return;
+      // }
+      // let hostingRequester = prompt("Enter hosting requester:");
+      // if (!hostingRequester) {
+      //   alert("Please enter a valid hosting requester");
+      //   setLoading(false);
+      //   return;
+      // }
 
-      let hostingRequestDate = prompt(
-        "Enter hosting request date (mm/dd/yyyy):"
-      );
+      // let hostingRequestDate = prompt(
+      //   "Enter hosting request date (mm/dd/yyyy):"
+      // );
 
-      const errorMessage = validateDate(hostingRequestDate);
+      // const errorMessage = validateDate(hostingRequestDate);
 
-      if (errorMessage) {
-        alert(errorMessage);
-        setLoading(false);
-        return;
-      } else {
-        console.log("Date is valid!");
-      }
+      // if (errorMessage) {
+      //   alert(errorMessage);
+      //   setLoading(false);
+      //   return;
+      // } else {
+      //   console.log("Date is valid!");
+      // }
 
       let newLab = {
         ...lab,
         latestTag,
-        hostingURL,
+        // ,
         prevTag,
-        hostingRequester,
+        // ,
         status: "-",
         conclusion: null,
-        hostingRequestDate,
+        // ,
         experimentCount: len,
         phase,
         workflows,
         selectedWorkflow: workflows[0],
       };
-      setDeployLabList([...deployLabList, newLab]);
+      setTemLab(newLab);
+      setModal(true);
+
+      //
     } catch (err) {
       alert(
         "Error adding lab to deploy list: Not able to fetch latest tag or workflow list"
@@ -112,6 +117,8 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
         setPresent(result);
       }}
     >
+      {modal && <HostingInfoForm setModal={setModal} temLab={temLab} />}
+
       <div className="result-heading flex flex-row">
         <h3 className="heading flex-1">{result.labName}</h3>
       </div>
