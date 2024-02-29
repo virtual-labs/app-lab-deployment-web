@@ -7,7 +7,7 @@ import { SEARCH_API } from "../utils/config_data";
 import ReactLoading from "react-loading";
 import { useState } from "react";
 import Ajv from "ajv";
-import { useDescriptor } from "../utils/config_data";
+import { useConfig } from "../utils/config_data";
 
 const ResultViewBox = ({ present, json, loading, setLoading }) => {
   const jsonEditorRef = useRef(null);
@@ -15,7 +15,7 @@ const ResultViewBox = ({ present, json, loading, setLoading }) => {
   const [validationErrors, setValidationErrors] = useState([]);
 
   const ajv = new Ajv();
-  const descriptor = useDescriptor();
+  const { descriptor } = useConfig();
 
   useEffect(() => {
     if (jsonEditorRef.current !== null) {

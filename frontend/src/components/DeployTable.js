@@ -6,9 +6,11 @@ import ReactLoading from "react-loading";
 import Tick from "../media/accept.png";
 import Failed from "../media/remove.png";
 import Start from "../media/play.png";
+import { useConfig } from "../utils/config_data";
 
 const DeployTable = ({ data }) => {
   const { deployLabList, setDeployLabList } = useDeployLabList();
+  const { workflowConfig } = useConfig();
 
   let isDeploying = false;
 
@@ -277,7 +279,7 @@ const DeployTable = ({ data }) => {
                           key={index}
                           selected={item.selectedWorkflow === workflow}
                         >
-                          {workflow}
+                          {workflowConfig[workflow]}
                         </option>
                       );
                     })}

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import ini from "ini";
 
 const DEFAULT_SECTION = {
   accessibility: "public",
@@ -55,31 +56,37 @@ function useDescriptorSource() {
 }
 
 function useWorkflowConfigSource() {
-  const [descriptor, setDescriptor] = useState({});
+  const [workflowName, setWorflowName] = useState({});
 
   useEffect(() => {
     fetch(
-      "https://raw.githubusercontent.com/virtual-labs/ph3-lab-mgmt/master/validation/schemas/labDescSchema.json"
+      "https://raw.githubusercontent.com/virtual-labs/app-lab-deployment-web/dev/config/workflow.cfg"
     )
-      .then((response) => response.json())
+      .then((response) => response.text())
       .then((data) => {
-        console.log("descriptorSchema:", data);
-        setDescriptor(data);
+        const parsedConfig = ini.parse(data).workflow;
+        console.log("workflowList:", parsedConfig);
+        setWorflowName(parsedConfig);
       });
   }, []);
 
-  return descriptor;
+  return workflowName;
 }
 
 const GithubConfigContext = createContext();
 
-function useDescriptor() {
+function useConfig() {
   return useContext(GithubConfigContext);
 }
 
 function DescriptorTemplateProvider({ children }) {
   return (
-    <GithubConfigContext.Provider value={useDescriptorSource()}>
+    <GithubConfigContext.Provider
+      value={{
+        descriptor: useDescriptorSource(),
+        workflowConfig: useWorkflowConfigSource(),
+      }}
+    >
       {children}
     </GithubConfigContext.Provider>
   );
@@ -127,7 +134,7 @@ export {
   DEFAULT_QUERY,
   SEARCH_API,
   DescriptorTemplateProvider,
-  useDescriptor,
+  useConfig,
   AUTH_API,
   USER_API,
   LOGIN_API,
