@@ -54,17 +54,34 @@ function useDescriptorSource() {
   return descriptor;
 }
 
-const DescriptorContext = createContext();
+function useWorkflowConfigSource() {
+  const [descriptor, setDescriptor] = useState({});
+
+  useEffect(() => {
+    fetch(
+      "https://raw.githubusercontent.com/virtual-labs/ph3-lab-mgmt/master/validation/schemas/labDescSchema.json"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("descriptorSchema:", data);
+        setDescriptor(data);
+      });
+  }, []);
+
+  return descriptor;
+}
+
+const GithubConfigContext = createContext();
 
 function useDescriptor() {
-  return useContext(DescriptorContext);
+  return useContext(GithubConfigContext);
 }
 
 function DescriptorTemplateProvider({ children }) {
   return (
-    <DescriptorContext.Provider value={useDescriptorSource()}>
+    <GithubConfigContext.Provider value={useDescriptorSource()}>
       {children}
-    </DescriptorContext.Provider>
+    </GithubConfigContext.Provider>
   );
 }
 

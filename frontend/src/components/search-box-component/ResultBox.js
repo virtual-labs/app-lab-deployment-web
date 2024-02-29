@@ -1,6 +1,6 @@
 import React from "react";
 import axios from "axios";
-import { SEARCH_API, validateDate, validateURL } from "../../utils/config_data";
+import { SEARCH_API } from "../../utils/config_data";
 import ReactLoading from "react-loading";
 import HostingInfoForm from "../HostingInfoForm";
 
