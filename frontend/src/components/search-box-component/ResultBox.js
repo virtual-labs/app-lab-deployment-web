@@ -105,6 +105,7 @@ const ResultBox = ({ result, setPresent, present, inList }) => {
 
   const handleClick = (event) => {
     event.stopPropagation();
+    setPresent(result);
     addToList(result);
   };
 

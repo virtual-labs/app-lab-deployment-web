@@ -123,6 +123,7 @@ const ResultViewBox = ({ present, json, loading, setLoading }) => {
           Lab Descriptor
         </div>
         <button
+          id="valid-label"
           className={`px-2 ${
             isValid ? "bg-green-600" : "bg-red-600"
           } text-gray-100 text-base mr-2 rounded-full	 `}

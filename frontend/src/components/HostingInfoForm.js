@@ -36,6 +36,14 @@ const HostingInfoForm = ({ temLab, setModal }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    const validButton = document.getElementById("valid-label");
+    if (validButton) {
+      if (validButton.innerText === "Invalid Decsriptor") {
+        alert("Descriptor is not valid");
+        return;
+      }
+    }
+
     if (validateForm()) {
       const newLab = {
         ...temLab,
