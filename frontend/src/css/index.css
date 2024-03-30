@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.jsoneditor {
+    border: none !important;
+}
+
+div[role="row"]:hover {
+    background-color: rgb(230, 244, 244);
+    border-bottom-color: #FFFFFF;
+    outline: 1px solid #FFFFFF;
+}
+
+.status {
+    display: inline-block;
+    border-radius: 5px;
+    padding: 5px;
+    color: white;
+    background-color: #4CAF50;
+}
+
+.status.Approved {
+    background-color: #4CAF50;
+}
+
+.status.Reverted {
+    background-color: #f44336;
+}
+
+.atable-parent div:first-child {
+    overflow: auto !important;
+}
+
+.jsoneditor-menu {
+    background-color: #00a38a !important;
+}
+
+.host-req {
+    z-index: 2147483647 !important;
+}
