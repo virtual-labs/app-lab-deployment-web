@@ -22,6 +22,38 @@ const DEFAULT_QUERY = {
   page_title_filter: "",
 };
 
+const tableStyle = {
+  headRow: {
+    style: {
+      border: "none",
+      backgroundColor: "#F5F5F5",
+    },
+  },
+  headCells: {
+    style: {
+      color: "#202124",
+      fontSize: "16px",
+      whiteSpace: "unset",
+      textOverflow: "unset",
+    },
+  },
+  rows: {
+    highlightOnHoverStyle: {
+      backgroundColor: "rgb(230, 244, 244)",
+      borderBottomColor: "#FFFFFF",
+      borderRadius: "25px",
+      outline: "1px solid #FFFFFF",
+      whiteSpace: "unset",
+      textOverflow: "unset",
+    },
+  },
+  pagination: {
+    style: {
+      border: "none",
+    },
+  },
+};
+
 let BASE_URL = "http://localhost:5005";
 
 console.log("NODE_ENV:", process.env.REACT_APP_FRONTEND_ENV);
@@ -129,6 +161,11 @@ function validateURL(url) {
   return null;
 }
 
+function capitalizeFirstLetter(str) {
+  str = str.split("-").join(" ");
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export {
   DEFAULT_SECTION,
   DEFAULT_QUERY,
@@ -140,4 +177,6 @@ export {
   LOGIN_API,
   validateDate,
   validateURL,
+  tableStyle,
+  capitalizeFirstLetter,
 };
