@@ -9,6 +9,7 @@ const HostingInfoForm = ({ temLab, setModal }) => {
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date());
+  const [remarks, setRemarks] = useState("");
   const { deployLabList, setDeployLabList } = useDeployLabList();
 
   const validateForm = () => {
@@ -54,6 +55,7 @@ const HostingInfoForm = ({ temLab, setModal }) => {
           day: "numeric",
           year: "numeric",
         }),
+        remarks,
       };
       setDeployLabList([...deployLabList, newLab]);
 
@@ -114,6 +116,19 @@ const HostingInfoForm = ({ temLab, setModal }) => {
               className="search-query w-input"
               selected={date}
               onChange={(newDate) => setDate(newDate)}
+            />
+          </div>
+
+          <div className="flex flex-row">
+            <label className="flex items-center w-1/2">Remarks</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              className="search-query w-input"
+              placeholder="Remarks if any"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
             />
           </div>
           <button type="submit" className="submit-button w-button w-32">

@@ -6,7 +6,7 @@ import ReactLoading from "react-loading";
 import Tick from "../media/accept.png";
 import Failed from "../media/remove.png";
 import Start from "../media/play.png";
-import { useConfig } from "../utils/config_data";
+import { useConfig, capitalizeFirstLetter } from "../utils/config_data";
 
 const DeployTable = ({ data }) => {
   const { deployLabList, setDeployLabList } = useDeployLabList();
@@ -35,11 +35,6 @@ const DeployTable = ({ data }) => {
 
   const format = (str) => {
     if (str === null) return "";
-
-    function capitalizeFirstLetter(str) {
-      str = str.split("_").join(" ");
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
 
     const waiting = [
       "queued",
@@ -167,6 +162,7 @@ const DeployTable = ({ data }) => {
             <th className="py-2 px-4 border-r">Requester</th>
             <th className="py-2 px-4 border-r">Hosting Request Date</th>
             <th className="py-2 px-4 border-r">Workflow</th>
+            <th className="py-2 px-4 border-r">Remarks</th>
             <th className="py-2 px-4 border-r">Status</th>
             <th className="py-2 px-4 border-r">Conclusion</th>
           </tr>
@@ -285,6 +281,7 @@ const DeployTable = ({ data }) => {
                     })}
                   </select>
                 </td>
+                <td className="py-2 px-4 border-r">{item.remarks}</td>
                 <td className="py-2 px-4 border-r h-16 items-center justify-center">
                   {format(item.status)}
                 </td>

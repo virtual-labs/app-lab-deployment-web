@@ -435,6 +435,7 @@ const deployLab = async (req, res) => {
   );
 
   const token = access_token;
+  console.log(repoOwner, repoName, workflowName, branch, token);
 
   const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows`;
   const headers = {
@@ -593,6 +594,7 @@ const addAnalytics = async (req, res) => {
     hostingRequestDate,
     experimentCount,
     phase,
+    remarks,
   } = req.body;
 
   const newTag = revert ? prevTag : `v${getNextTag(latestTag)}`;
@@ -613,16 +615,17 @@ const addAnalytics = async (req, res) => {
       "",
       university,
       `=HYPERLINK("${repoLink}", "${labName}")`,
+      phase,
       `=HYPERLINK("${labLink}", "Hosted")`,
+      remarks,
       experimentCount,
-      currentTagHyperlink,
-      prevTagHyperlink,
       hostingRequestDate,
       formattedDate,
+      currentTagHyperlink,
+      prevTagHyperlink,
       `=HYPERLINK("${hostingURL}", "Link")`,
       hostingRequester,
       revert ? "Reverted" : "Approved",
-      phase,
     ],
   ];
   await appendIntoSheet(rows, SPREADSHEET_ID, SPREADSHEET_HOSTING_RANGE);
