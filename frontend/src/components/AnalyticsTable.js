@@ -1,7 +1,7 @@
 import DataTable from "react-data-table-component";
 import React from "react";
 import axios from "axios";
-import { SEARCH_API } from "../utils/config_data";
+import { SEARCH_API, tableStyle } from "../utils/config_data";
 
 const notToBeSorted = [
   "Hosted URL",
@@ -15,38 +15,6 @@ const notToBeSorted = [
   "No.of Experiment",
   "Phase",
 ];
-
-const customStyles = {
-  headRow: {
-    style: {
-      border: "none",
-      backgroundColor: "#F5F5F5",
-    },
-  },
-  headCells: {
-    style: {
-      color: "#202124",
-      fontSize: "16px",
-      whiteSpace: "unset",
-      textOverflow: "unset",
-    },
-  },
-  rows: {
-    highlightOnHoverStyle: {
-      backgroundColor: "rgb(230, 244, 244)",
-      borderBottomColor: "#FFFFFF",
-      borderRadius: "25px",
-      outline: "1px solid #FFFFFF",
-      whiteSpace: "unset",
-      textOverflow: "unset",
-    },
-  },
-  pagination: {
-    style: {
-      border: "none",
-    },
-  },
-};
 
 const getSortFunction = (key) => {
   if (key === "Hosting Date" || key === "Hosting request date") {
@@ -113,18 +81,16 @@ function AnalyticsTable() {
           let tem_col = {};
 
           tem_col = {
-            name: key,
-            selector: (row) => row[key],
+            name: key === "id" ? "S. No." : key,
+            selector: (row) => (key === "id" ? row[key] + 1 : row[key]),
             sortable: !notToBeSorted.includes(key),
             wrap: true,
             sortFunction: !notToBeSorted.includes(key)
               ? getSortFunction(key)
               : undefined,
+            width: `${130}px`,
           };
 
-          if (key.length > 10) tem_col.width = `${250}px`;
-          else if (key.length > 5) tem_col.width = `${150}px`;
-          else tem_col.width = `${100}px`;
           newColumns.push(tem_col);
         }
         console.log(newColumns);
@@ -244,7 +210,7 @@ function AnalyticsTable() {
         columns={columns}
         data={newRows}
         progressPending={pending}
-        customStyles={customStyles}
+        customStyles={tableStyle}
         pagination
       />
       <div className="flex flex-col p-2">

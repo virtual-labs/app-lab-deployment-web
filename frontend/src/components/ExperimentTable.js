@@ -1,44 +1,11 @@
 import DataTable from "react-data-table-component";
 import React from "react";
 import axios from "axios";
-import { SEARCH_API } from "../utils/config_data";
-
-const customStyles = {
-  headRow: {
-    style: {
-      border: "none",
-      backgroundColor: "#F5F5F5",
-    },
-  },
-  headCells: {
-    style: {
-      color: "#202124",
-      fontSize: "16px",
-      whiteSpace: "unset",
-      textOverflow: "unset",
-    },
-  },
-  rows: {
-    highlightOnHoverStyle: {
-      backgroundColor: "rgb(230, 244, 244)",
-      borderBottomColor: "#FFFFFF",
-      borderRadius: "25px",
-      outline: "1px solid #FFFFFF",
-      whiteSpace: "unset",
-      textOverflow: "unset",
-    },
-  },
-  pagination: {
-    style: {
-      border: "none",
-    },
-  },
-};
-
-function capitalizeFirstLetter(str) {
-  str = str.split("-").join(" ");
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import {
+  SEARCH_API,
+  tableStyle,
+  capitalizeFirstLetter,
+} from "../utils/config_data";
 
 function ExperimentTable({ labName }) {
   const [pending, setPending] = React.useState(true);
@@ -101,7 +68,7 @@ function ExperimentTable({ labName }) {
         columns={columns}
         data={rows}
         progressPending={pending}
-        customStyles={customStyles}
+        customStyles={tableStyle}
         pagination
       />
     </>
