@@ -106,9 +106,7 @@ const getLabList = async () => {
     rows = rows.map((row, i) => {
       return { ...row, index: i };
     });
-    let labs = rows.filter(
-      (row) => row.hasOwnProperty("values") && row.values.length === 6
-    );
+    let labs = rows.filter((row) => row.hasOwnProperty("values"));
     let instituteName = "";
 
     let labList = [];
@@ -147,6 +145,7 @@ const getLabList = async () => {
         });
       }
     }
+
     return labList;
   } catch (error) {
     console.log(error);
@@ -306,7 +305,9 @@ const updateRow = async (
   discipline,
   labURL,
   descriptorURL,
-  rowIndex
+  rowIndex,
+  phase,
+  exp_no
 ) => {
   const sheetsAuth = new google.auth.GoogleAuth({
     keyFile: "./secrets/service-account-secret.json",
@@ -324,8 +325,11 @@ const updateRow = async (
         discipline,
         `=HYPERLINK("${labURL}", "Repo Link")`,
         `=HYPERLINK("${descriptorURL}", "Lab Descriptor Link")`,
+        phase,
+        exp_no,
       ],
     ];
+    console.log("Updating row:", rows);
 
     await google.sheets("v4").spreadsheets.values.update({
       auth: authClient,
@@ -344,8 +348,16 @@ const updateRow = async (
 };
 
 const addLab = async (req, res) => {
-  const { university, labName, labLink, discipline, labURL, descriptorURL } =
-    req.body;
+  const {
+    university,
+    labName,
+    labLink,
+    discipline,
+    labURL,
+    descriptorURL,
+    phase,
+    exp_no,
+  } = req.body;
   {
     if (!university) {
       throw new BadRequestError(`institute name missing`);
@@ -368,11 +380,21 @@ const addLab = async (req, res) => {
     if (!descriptorURL) {
       throw new BadRequestError(`descriptor url missing`);
     }
+
+    if (!phase) {
+      throw new BadRequestError(`phase missing`);
+    }
+
+    if (!exp_no) {
+      throw new BadRequestError(`experiment count missing`);
+    }
   }
+
   const labList = await getLabList();
   const f = labList.filter((lab, i) => {
     return lab.repoLink === labURL;
   });
+
   if (f.length !== 0) {
     await updateRow(
       SPREADSHEET_ID,
@@ -384,7 +406,9 @@ const addLab = async (req, res) => {
       discipline,
       labURL,
       descriptorURL,
-      f[0].index + 1
+      f[0].index + 1,
+      phase,
+      exp_no
     );
     return res
       .status(StatusCodes.OK)
@@ -399,6 +423,8 @@ const addLab = async (req, res) => {
       discipline,
       `=HYPERLINK("${labURL}", "Repo Link")`,
       `=HYPERLINK("${descriptorURL}", "Lab Descriptor Link")`,
+      phase,
+      exp_no,
     ],
   ];
   await appendIntoSheet(rows, SPREADSHEET_ID, SPREADSHEET_RANGE);
@@ -678,7 +704,7 @@ const getDeployedLabList = async (req, res) => {
     .map((_, i) => ({ key: i, name: newRows[0][i].raw }))
     .filter((col) => col.name !== "");
 
-  newRows = newRows.slice(2);
+  newRows = newRows.slice(1);
 
   let deployedLabs = [];
   let index = 0;

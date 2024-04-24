@@ -95,7 +95,7 @@ function AnalyticsTable() {
         }
         console.log(newColumns);
         setColumns(newColumns);
-        setRows(deployedLabs.reverse());
+        setRows(deployedLabs);
         setOriginalRows(deployedLabs);
       } catch (err) {
         console.log(err);

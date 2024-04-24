@@ -16,7 +16,7 @@ const HostingInfoForm = ({ temLab, setModal }) => {
     const newErrors = {};
 
     // Validate URL
-    if (validateURL(url)) {
+    if (!validateURL(url)) {
       newErrors.url = "URL is required";
     }
 

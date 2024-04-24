@@ -11,6 +11,7 @@
     "ajv": "^6.12.6",
     "axios": "^1.6.2",
     "ini": "^4.1.1",
+    "is-url-http": "^2.3.8",
     "jsoneditor": "^9.0.0",
     "jsoneditor-react": "^3.1.2",
     "react": "^18.2.0",

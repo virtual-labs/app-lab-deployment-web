@@ -25,7 +25,22 @@ const AddLab = ({ setModal }) => {
       "&access_token=" +
       localStorage.getItem("accessToken") +
       "&want_descriptor_url=1";
+
     async function fetchData() {
+      const countExp = (lab_des) => {
+        if (lab_des.experiments) {
+          return lab_des.experiments.length;
+        }
+        if (lab_des["experiment-sections"]) {
+          let cnt = 0;
+          for (const section of lab_des["experiment-sections"]) {
+            cnt += section.experiments.length;
+          }
+          return cnt;
+        }
+        return 0;
+      };
+
       const config = {
         method: "GET",
         headers: {
@@ -51,6 +66,8 @@ const AddLab = ({ setModal }) => {
         discipline: response.broadArea.name,
         labURL,
         descriptorURL: response.descriptorURL,
+        phase: response.phase || "",
+        exp_no: countExp(response),
       };
       setLab(labObject);
       console.log(labObject);

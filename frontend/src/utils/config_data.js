@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import ini from "ini";
+import isUrlHttp from "is-url-http";
 
 const DEFAULT_SECTION = {
   accessibility: "public",
@@ -153,12 +154,7 @@ function validateDate(dateString) {
 }
 
 function validateURL(url) {
-  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-
-  if (!urlRegex.test(url)) {
-    return "Invalid URL. Please enter a valid URL.";
-  }
-  return null;
+  return isUrlHttp(url);
 }
 
 function capitalizeFirstLetter(str) {
