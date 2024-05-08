@@ -14,9 +14,7 @@ const Protected = () => {
     return <div>Redirecting to GitHub Login...</div>;
   }
 
-  return (
-      <Main />
-  );
+  return <Main />;
 };
 
 export default Protected;

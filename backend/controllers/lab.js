@@ -113,7 +113,10 @@ const getLabList = async () => {
 
     for (let lab of labs) {
       let values = lab.values;
-      if (!values[2]) continue;
+      if (!values[1]) continue;
+      if (values.length < 4) continue;
+      // console.log(values);
+
       let university = "";
 
       if (values[1].userEnteredValue)
@@ -432,6 +435,7 @@ const addLab = async (req, res) => {
 };
 
 async function getLatestWorkflowRunId(repoOwner, repoName, workflowId, token) {
+  console.log("getLatestWorkflowRunId", repoOwner, repoName, workflowId);
   try {
     const response = await axios.get(
       `https://api.github.com/repos/${repoOwner}/${repoName}/actions/workflows/${workflowId}/runs`,
@@ -442,6 +446,7 @@ async function getLatestWorkflowRunId(repoOwner, repoName, workflowId, token) {
         },
       }
     );
+    console.log(response.data);
     return response.data.workflow_runs[0].id;
   } catch (error) {
     console.error("Error getting latest workflow run ID:", error.message);
@@ -497,7 +502,7 @@ const deployLab = async (req, res) => {
       return res
         .status(StatusCodes.OK)
         .json({ message: "success", workflowRunId });
-    }, 2000);
+    }, 10000);
   } catch (error) {
     console.error("Error triggering workflow:", error.message);
     return res.status(400).json({ message: error.message });

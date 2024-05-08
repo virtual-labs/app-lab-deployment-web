@@ -1,5 +1,6 @@
 import React from "react";
 import { DEFAULT_SECTION, SEARCH_API } from "../../utils/config_data";
+import { useRef } from "react";
 
 const QueryBox = ({
   loader,
@@ -9,13 +10,21 @@ const QueryBox = ({
   results,
   inpRef,
 }) => {
+  const controllerRef = useRef();
+
   const getResults = async (e) => {
     e.preventDefault();
     const query = inpRef.current.value;
-    if (loader) return;
     if (query.trim() === "") {
       return;
     }
+
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+
+    controllerRef.current = new AbortController();
+    let signal = controllerRef.current.signal;
 
     const url = SEARCH_API + "?search=" + query;
     try {
@@ -27,6 +36,7 @@ const QueryBox = ({
           "Access-Control-Allow-Origin": "*",
           Connection: "keep-alive",
         },
+        signal: signal,
       };
       setLoading(true);
       setPresent(DEFAULT_SECTION);
@@ -68,6 +78,7 @@ const QueryBox = ({
               placeholder="Enter lab name..."
               id="name"
               ref={inpRef}
+              onChange={getResults}
             />
             <input
               type="submit"
