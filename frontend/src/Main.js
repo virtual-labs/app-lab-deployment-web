@@ -28,17 +28,6 @@ function Main() {
   const [viewHelp, setViewHelp] = useState(false);
   const [help, setHelp] = useState("");
 
-  useEffect(() => {
-    const T = async () => {
-      const helpContent = await axios.get(
-        "https://raw.githubusercontent.com/virtual-labs/app-lab-deployment-web/main/docs/user_doc.md"
-      );
-
-      setHelp(helpContent.data);
-    };
-    T();
-  }, []);
-
   const { labname } = useParams();
 
   const viewExpInfo = labname !== undefined;
@@ -50,6 +39,7 @@ function Main() {
       present.repoName +
       "&access_token=" +
       localStorage.getItem("accessToken");
+
     async function fetchData() {
       const config = {
         method: "GET",
@@ -77,6 +67,12 @@ function Main() {
 
   useEffect(() => {
     async function fetchData() {
+      const helpContent = await axios.get(
+        "https://raw.githubusercontent.com/virtual-labs/app-lab-deployment-web/main/docs/user_doc.md"
+      );
+
+      setHelp(helpContent.data);
+
       const config = {
         method: "GET",
         headers: {
