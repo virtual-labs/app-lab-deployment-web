@@ -6,6 +6,7 @@ import { Routes, Route, Link } from "react-router-dom";
 // import Callback from "./Callback";
 import Protected from "./Protected";
 import Callback from "./Callback";
+import Landing from "./Landing";
 
 const Default = () => {
   return (
@@ -33,7 +34,7 @@ const Test = () => {
 const App = () => {
   return (
     <Routes>
-      <Route path="/" element={<Default />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/dashboard" element={<Protected />} />
       <Route path="/callback" element={<Callback />} />
       <Route path="/test" element={<Test />} />

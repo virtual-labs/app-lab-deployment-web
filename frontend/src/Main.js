@@ -14,6 +14,8 @@ import { USER_API } from "./utils/config_data";
 import AnalyticsTable from "./components/AnalyticsTable";
 import { useParams } from "react-router-dom";
 import ExperimentTable from "./components/ExperimentTable";
+import HelpPane from "./components/HelpPane";
+import axios from "axios";
 
 function Main() {
   const [present, setPresent] = useState(DEFAULT_SECTION);
@@ -23,6 +25,19 @@ function Main() {
   const [userInfo, setUserInfo] = useState({});
   const [showDeployTab, setShowDeployTab] = useState(false);
   const [viewAnalytics, setViewAnalytics] = useState(false);
+  const [viewHelp, setViewHelp] = useState(false);
+  const [help, setHelp] = useState("");
+
+  useEffect(() => {
+    const T = async () => {
+      const helpContent = await axios.get(
+        "https://raw.githubusercontent.com/virtual-labs/app-lab-deployment-web/main/docs/user_doc.md"
+      );
+
+      setHelp(helpContent.data);
+    };
+    T();
+  }, []);
 
   const { labname } = useParams();
 
@@ -91,6 +106,7 @@ function Main() {
       <LabListProvider>
         <DescriptorTemplateProvider>
           <div className="flex flex-col h-screen w-screen overflow-hidden">
+            {viewHelp && <HelpPane setViewHelp={setViewHelp} help={help} />}
             {modal && <AddLab setModal={setModal} />}
             <div className="flex">
               <NavBar
@@ -101,6 +117,7 @@ function Main() {
                 setViewAnalytics={setViewAnalytics}
                 viewAnalytics={viewAnalytics}
                 viewExpInfo={viewExpInfo}
+                setViewHelp={setViewHelp}
               />
             </div>
             {!viewExpInfo &&

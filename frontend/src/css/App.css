@@ -2988,3 +2988,21 @@ textarea.w-select {
 .error {
   background-color: red;
 }
+
+.add-button {
+  background-color: #00ac8e;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+}
+
+.add-button:hover {
+  background-color: #00a38a;
+}
+
+.add-button:active {
+  background-color: #036456;
+}

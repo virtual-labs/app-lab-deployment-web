@@ -1,7 +1,7 @@
 import React from "react";
 import NavImg from "../media/download.png";
 import { useDeployLabList } from "../utils/useLabList";
-
+import HelpIcon from "../media/help.png";
 import axios from "axios";
 
 import { SEARCH_API } from "../utils/config_data";
@@ -14,6 +14,7 @@ const NavBar = ({
   viewAnalytics,
   setViewAnalytics,
   viewExpInfo,
+  setViewHelp,
 }) => {
   const { deployLabList, setDeployLabList } = useDeployLabList();
   const [deployLoading, setDeployLoading] = React.useState(false);
@@ -190,6 +191,14 @@ const NavBar = ({
             Lab Deployment
           </div>
           <div style={{ float: "right", marginLeft: "auto" }}>
+            <button
+              key={"help"}
+              className="add-button mr-2"
+              onClick={() => setViewHelp(true)}
+              title={"Help"}
+            >
+              <img height={30} width={30} src={HelpIcon} alt="Help" />
+            </button>
             {!isDeploying && !viewAnalytics && !viewExpInfo && (
               <span
                 className="text-lg text-gray-100 hover:text-gray-200 hover:underline cursor-pointer mr-1"
