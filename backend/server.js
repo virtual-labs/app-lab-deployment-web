@@ -21,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("<h1>Lab deployment API v1.0.0..</h1>");
+  res.send("<h1>Lab deployment API v1.0.0</h1>");
 });
 
 const getGitHubAccessToken = async (code, client_id, client_secret) => {

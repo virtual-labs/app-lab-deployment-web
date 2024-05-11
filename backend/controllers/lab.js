@@ -643,7 +643,6 @@ const addAnalytics = async (req, res) => {
 
   const rows = [
     [
-      "",
       university,
       `=HYPERLINK("${repoLink}", "${labName}")`,
       phase,
