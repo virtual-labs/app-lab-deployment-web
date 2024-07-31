@@ -133,6 +133,8 @@ const getLabList = async () => {
         let { link: labLink, name: labName } = getLinkAndName(values[2]);
         let discipline = values[3].userEnteredValue.stringValue.trim();
         let { link: repoLink } = getLinkAndName(values[4]);
+        repoLink = repoLink.trim();
+        if (repoLink.endsWith("/")) repoLink = repoLink.slice(0, -1);
         let repoName = repoLink.split("/").pop();
         let { link: descriptorLink } = getLinkAndName(values[5]);
 
